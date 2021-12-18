@@ -18,6 +18,4 @@ class Webargs(BaseModel):
     offset: int = 0
 
 class HeadSchema(Webargs):
-    first_offset: str
-    last_offset: str
     count: str
