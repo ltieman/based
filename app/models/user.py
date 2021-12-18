@@ -6,3 +6,4 @@ from datetime import datetime
 class User(Base):
     __tablename__ = "user"
     token = Column(String)
+
