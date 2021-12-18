@@ -36,7 +36,7 @@ class CrudComponent:
         query = cls.non_field_index_params(params=params,
                                            query=query)
         if for_head:
-          return query
+            return query
         return query.offset(params.get('offset',0)).limit(params.get('limit',20)).all()
 
     @classmethod
