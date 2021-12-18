@@ -6,12 +6,13 @@ name = "pypi"
 [packages]
 fastapi = "*"
 sqlalchemy = "*"
-fastapi-auth0 = "*"
 fastapi-utils = "*"
 uvicorn = "*"
 gunicorn = "*"
+authlib = "*"
+alembic = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.9"

@@ -7,23 +7,24 @@ from ..schemas.base import ArchiveUpdate
 
 class CrudComponent:
     model: Base
-    post_schema: BaseModel = None
-    get_schema: BaseModel = None
 
     @classmethod
     def get(cls, session: Session, id: int)->Base:
-        return session(cls.model).filter(cls.model == id).first()
+        return session.query(cls.model).filter(cls.model == id).first()
 
     @classmethod
-    def index(cls, session: Session, params: BaseModel)->List[Base]:
-        params = params.dict()
-        query = session(cls.model)
+    def index(cls, session: Session, params: BaseModel= None)->List[Base]:
+        if params:
+            params = params.dict()
+        else:
+            params = {}
+        query = session.query(cls.model)
         for k,v in params.items():
             try:
                 query = query.filter(getattr(cls.model,k) == v)
             except:
                 pass
-        return query.offset(params['offset']).limit(params['limit']).all()
+        return query.offset(params.get('offset',0)).limit(params.get('limit',20)).all()
 
     @classmethod
     def post(cls, session: Session, data: BaseModel)->Base:
