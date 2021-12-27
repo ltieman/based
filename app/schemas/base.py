@@ -8,7 +8,10 @@ class PostSchema(BaseModel):
     pass
 
 class GetSchema(BaseModel):
-    pass
+    created: datetime
+    archive: datetime = None
+    modified: datetime = None
+
 
 class PatchSchema(BaseModel):
     pass
