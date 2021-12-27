@@ -1,7 +1,7 @@
 from app.models.base import Base
 from pydantic import BaseModel
 from sqlalchemy.orm import Session, Query
-from typing import List, Union
+from typing import List, Union, Any
 from sqlalchemy import update
 from app.schemas.base import ArchiveUpdate, HeadSchema
 
@@ -11,13 +11,23 @@ class CrudComponent:
     def non_field_index_params(cls,
                                params: dict,
                                query: Query)->Query:
+        try:
+            if not params['show_archived']:
+                query = query.filter(cls.model.archived is None)
+            del params['show_archived']
+        except:
+            pass
+        for k,v in params.items():
+            if hasattr(cls.model,k):
+                query = query.filter(getattr(cls.model,k) == v)
         return query
 
     @classmethod
     def get(cls,
             session: Session,
             id: int)->Base:
-        return session.query(cls.model).filter(cls.model == id).first()
+        item = session.query(cls.model).filter(cls.model.id == id).first()
+        return item
 
     @classmethod
     def index(cls, session: Session,
@@ -54,8 +64,9 @@ class CrudComponent:
                session,
                id: int,
                data: BaseModel)->Base:
-        up_query = update(cls.model).where(cls.model == id).values(**data.dict())
-        session.add(up_query)
+        up_query = update(cls.model).where(cls.model.id == id).values(**data.dict())
+        session.execute(up_query)
+        session.commit()
         return cls.get(session,id)
 
     @classmethod
@@ -63,6 +74,12 @@ class CrudComponent:
                session: Session,
                id: int)->Base:
         return cls.update(session=session,id=id, data=ArchiveUpdate())
+
+    @classmethod
+    def undelete(cls,
+               session: Session,
+               id: int) -> Base:
+        return cls.update(session=session, id=id, data=ArchiveUpdate(archived=None))
 
     @classmethod
     def head(cls,

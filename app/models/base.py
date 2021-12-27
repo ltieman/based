@@ -16,7 +16,7 @@ class TableBase(object):
         return {c.key: getattr(self, c.key) for c in inspect(self).mapper.column_attrs}
     id = Column(Integer, primary_key=True, index=True)
     created = Column(DateTime, default=datetime.now())
-    updated = Column(DateTime)
+    updated = Column(DateTime, default=None, onupdate=datetime.now())
     archived = Column(DateTime)
 
 Base = declarative_base(cls=TableBase)
