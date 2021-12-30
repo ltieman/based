@@ -1,4 +1,4 @@
-#Based
+# Based
 
 Based is a light API framework built on top of FastAPI and FastAPI Utils.
 
@@ -7,7 +7,7 @@ flexible (and use SQLAlchemy), and offer an expressive but light REST API framew
 be built with very little code, or work as a base for whatever expansion I need 
 (and use SQLAlchemy).
 
-##Quick Start 
+## Quick Start 
 Below is an app I use in some of my tests.  All I am really doing is defining my interfaces,
 in SQLAlchemy and Pydantic models, and composing those into the view.  This will create 
 Post, Patch, Put, Get by ID, Get Index, Delete(Archive), UnDelete(UnArchive), and Head 
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
 
-##ToDo:
+## ToDo:
 * Finish Endpoint Tests
 * Document Existing Codebase with AutoGenerating Documentation
 * Incorporate Coverage
