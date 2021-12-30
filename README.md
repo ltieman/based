@@ -29,7 +29,7 @@ class TestsTable(BaseModel):
 
 #pydantic serialization models
 #matches whats needed on the db model
-#when using the 
+#when using the matching verb
 class TestPostSchema(PostSchema):
     name: str
 
@@ -83,8 +83,7 @@ class TestPostSchema(PostSchema):
 
 
 class TestGetSchema(TestPostSchema, GetSchema):
-    class Config:
-        orm_mode = True
+    pass
 
 #this is the new CrudClass        
 class TestCrud(BaseCrud):
