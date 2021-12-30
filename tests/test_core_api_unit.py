@@ -6,12 +6,15 @@ from app.views.base import BaseBuildView
 from app.schemas.base import GetSchema, PostSchema
 from app.middleware import register_middleware
 from fastapi.testclient import TestClient
+from app.db import  get_fastapi_sessionmaker
 from requests import Response
 import pytest
 import faker
 
+index_count = 40
 fake = faker.Faker()
-
+session = get_fastapi_sessionmaker()
+session = session.get_db().__next__()
 
 class UnitTestsTable(BaseModel):
     name = Column(String)
@@ -67,5 +70,43 @@ def test_api_get(api_get:Response, api_post:Response):
 
 def test_UnitTestView_Auto_Component():
     view = UnitTestView()
-    assert issubclass(view.component, BaseCrud)
-    assert view.component.model == UnitTestsTable
+    assert issubclass(view.crud_class, BaseCrud)
+    assert view.crud_class.model == UnitTestsTable
+
+def test_clean_up_one():
+    session.query(UnitTestsTable).delete()
+    session.commit()
+    items = UnitTestBaseCrud.index(session=session)
+    assert not items
+
+@pytest.mark.parametrize('data',[create_data()for _ in range(index_count)])
+def test_multi_api_post(data: UnitTestPostSchema)->Response:
+    response = test_client.post('/', json=data.dict())
+    assert response.status_code == 201
+
+
+def test_index():
+    response = test_client.get('/')
+    assert response.status_code == 200
+    json = response.json()
+    assert len(json) == 20
+    for obj in json:
+        by_id = test_client.get(f"/{obj['id']}")
+        assert by_id.status_code == 200
+        assert by_id.json() == obj
+    response = test_client.get('/',params={'offset':20})
+    assert response.status_code == 200
+    json = response.json()
+    assert len(json) == 20
+    for obj in json:
+        by_id = test_client.get(f"/{obj['id']}")
+        assert by_id.status_code == 200
+        assert by_id.json() == obj
+    response = test_client.get('/',params={'offset':40})
+    assert response.status_code == 200
+    json = response.json()
+    assert len(json) == 0
+
+
+
+

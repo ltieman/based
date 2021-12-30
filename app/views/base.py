@@ -51,12 +51,13 @@ class BaseBuildView:
                                          id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.get("/")
             def index(self,
                       params: dict = Depends(crudclass.query_params)
-                      ) -> List[GetSchema]:
+                      ) -> List[get_schema]:
                 if 'index' not in self.available_routes:
                     raise HTTPException(405)
                 items = crudclass.index(session=self.request.state.db,
@@ -64,6 +65,7 @@ class BaseBuildView:
                                         )
                 schema = [get_schema.from_orm(item) for item in items]
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.post("/",status_code=201)
@@ -75,6 +77,7 @@ class BaseBuildView:
                                       data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
 
@@ -89,6 +92,7 @@ class BaseBuildView:
                                         data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.put("/",status_code=202)
@@ -108,6 +112,7 @@ class BaseBuildView:
                                           data= item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.delete("/{id}",status_code=202)
@@ -119,6 +124,7 @@ class BaseBuildView:
                                             id = id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.delete("/undo/{id}",status_code=202)
@@ -130,6 +136,7 @@ class BaseBuildView:
                                           id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
+                self.request.state.db.close()
                 return schema
 
             @router.head("/")
@@ -143,6 +150,7 @@ class BaseBuildView:
                                                                     params=params
                                                                     )
                                                      )
+                self.request.state.db.close()
                 return {}
 
         self.router = router
