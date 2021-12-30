@@ -102,6 +102,8 @@ class BaseBuildView:
                     raise HTTPException(405)
                 try:
                     id = item.id
+                    if not id:
+                        raise ValueError('No ID')
                     del item.id
                     item = crudclass.update(session=self.request.state.db,
                                             id = id,
@@ -109,7 +111,7 @@ class BaseBuildView:
                                             )
                 except:
                     item = crudclass.post(session=self.request.state.db,
-                                          data= item)
+                                          data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
                 self.request.state.db.close()

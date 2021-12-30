@@ -78,7 +78,7 @@ class BaseCrud:
                data: BaseModel)->BaseModel:
 
         #again, standard SQL Alchemy update statment
-        up_query = update(cls.model).where(cls.model.id == id).values(**data.dict())
+        up_query = update(cls.model).where(cls.model.id == id).values(**data.dict(exclude_unset=True))
         session.execute(up_query)
         session.commit()
         return cls.get(session,id)
@@ -88,7 +88,7 @@ class BaseCrud:
                session: Session,
                id: int)->BaseModel:
         #uses the update method to modify the archived field
-        return cls.update(session=session,id=id, data=ArchiveUpdate())
+        return cls.update(session=session,id=id, data=ArchiveUpdate(archived = datetime.utcnow()))
 
     @classmethod
     def undelete(cls,

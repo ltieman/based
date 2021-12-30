@@ -52,7 +52,7 @@ def test_post(first_post):
     assert first_post.name
     assert first_post.created
     assert not first_post.archived
-    assert not first_post.updated
+    assert not first_post.modified
 
 def test_get(first_post):
     item = UnitTestBaseCrud.get(session=session, id=first_post.id)
@@ -65,14 +65,15 @@ def test_update(first_post, post_data):
     assert item.id == first_post.id
     assert item.name == update_data.name
     assert not item.name == name
-    assert item.updated
+    assert item.modified
     assert item.created == first_post.created
 
 def test_archive(first_post):
     item = UnitTestBaseCrud.delete(session=session,
                                    id=first_post.id)
-    assert item.archived
+    #assert item.archived
     assert item.id == first_post.id
+    assert item.archived
 
 def test_unarchived(first_post):
     item = UnitTestBaseCrud.delete(session=session,
