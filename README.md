@@ -61,7 +61,8 @@ All of this is done with a constructor class that builds the View class as well 
 class, which lets me not have to do all that work every time. While FastAPI and FastAPI utils
 have some peculiarities which seem to keep me from being able to have the API view class as
 inheritable as I'd like, This Crud class is fully inheritable, and only requires 2 extra 
-lines of code to declare extensively. 
+lines of code to declare extensively.
+
 ```python
 from app.models.base import BaseModel
 from fastapi import FastAPI
@@ -85,23 +86,25 @@ class TestPostSchema(PostSchema):
 class TestGetSchema(TestPostSchema, GetSchema):
     pass
 
-#this is the new CrudClass        
+
+# this is the new CrudClass        
 class TestCrud(BaseCrud):
     model = TestsTable
-    
+
     def get(cls,
             session: Session,
-            id: int) ->BaseModel:
-        #I could do all sorts of things in here now
+            id: int) -> BaseModel:
+        # I could do all sorts of things in here now
         return super().get(session=session, id=id)
 
-#add the new crud class to the constructor instead of the SQLAlchemy Table
+
+# add the new crud class to the constructor instead of the SQLAlchemy Table
 class TestView(BaseBuildView):
-    #replace
-    #model = TestTable
-    #with
-    component = TestCrud
-    
+    # replace
+    # model = TestTable
+    # with
+    crud_class = TestCrud
+
     get_schema = TestGetSchema
     post_schema = TestPostSchema
     patch_schema = TestPostSchema

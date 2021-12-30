@@ -13,16 +13,16 @@ class BaseBuildView:
     patch_schema: PatchSchema
     put_schema: PatchSchema
     available_routes: list = ['get','index','post','patch','put','delete','head','undelete']
-    component: BaseCrud = None
+    crud_class: BaseCrud = None
     model: BaseModel = None
 
     def __init__(self):
-        #uses a precomposed component if needed, otherwise generates one for you.
-        if not self.component:
+        #uses a precomposed crud_class if needed, otherwise generates one for you.
+        if not self.crud_class:
             class AutoCrud(BaseCrud):
                 model = self.model
-            self.component = AutoCrud
-        component = self.component
+            self.crud_class = AutoCrud
+        crudclass = self.crud_class
         router = InferringRouter()
         get_schema = self.get_schema
         post_schema = self.post_schema
@@ -47,7 +47,7 @@ class BaseBuildView:
                     id: int) -> get_schema:
                 if 'get' not in self.available_routes:
                     raise HTTPException(405)
-                item = component.get(session=self.request.state.db,
+                item = crudclass.get(session=self.request.state.db,
                                          id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
@@ -55,11 +55,11 @@ class BaseBuildView:
 
             @router.get("/")
             def index(self,
-                      params: dict = Depends(component.query_params)
+                      params: dict = Depends(crudclass.query_params)
                       ) -> List[GetSchema]:
                 if 'index' not in self.available_routes:
                     raise HTTPException(405)
-                items = component.index(session=self.request.state.db,
+                items = crudclass.index(session=self.request.state.db,
                                         params=params
                                         )
                 schema = [get_schema.from_orm(item) for item in items]
@@ -71,7 +71,7 @@ class BaseBuildView:
                      item: post_schema)->get_schema:
                 if 'post' not in self.available_routes:
                     raise HTTPException(405)
-                item = component.post(session=self.request.state.db,
+                item = crudclass.post(session=self.request.state.db,
                                       data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
@@ -84,7 +84,7 @@ class BaseBuildView:
                       item: patch_schema)->get_schema:
                 if 'patch' not in self.available_routes:
                     raise HTTPException(405)
-                item = component.update(session=self.request.state.db,
+                item = crudclass.update(session=self.request.state.db,
                                         id = id,
                                         data=item)
                 schema = get_schema.from_orm(item)
@@ -99,12 +99,12 @@ class BaseBuildView:
                 try:
                     id = item.id
                     del item.id
-                    item = component.update(session=self.request.state.db,
+                    item = crudclass.update(session=self.request.state.db,
                                             id = id,
                                             data=item
                                             )
                 except:
-                    item = component.post(session=self.request.state.db,
+                    item = crudclass.post(session=self.request.state.db,
                                           data= item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
@@ -115,7 +115,7 @@ class BaseBuildView:
                        id: int)->get_schema:
                 if 'delete' not in self.available_routes:
                     raise HTTPException(405)
-                item = component.delete(session=self.request.state.db,
+                item = crudclass.delete(session=self.request.state.db,
                                             id = id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
@@ -126,7 +126,7 @@ class BaseBuildView:
                          id: int)->get_schema:
                 if 'undelete' not in self.available_routes:
                     raise HTTPException(405)
-                item = component.undelete(session=self.request.state.db,
+                item = crudclass.undelete(session=self.request.state.db,
                                           id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
@@ -135,11 +135,11 @@ class BaseBuildView:
             @router.head("/")
             def head(self,
                      response: Response,
-                     params:dict = Depends(component.query_params),
+                     params:dict = Depends(crudclass.query_params),
                      ):
                 if 'head' not in self.available_routes:
                     raise HTTPException(405)
-                response.headers['Query-Length']=str(component.head(session=self.request.state.db,
+                response.headers['Query-Length']=str(crudclass.head(session=self.request.state.db,
                                                                     params=params
                                                                     )
                                                      )

@@ -4,7 +4,7 @@ from app.crud import UserCrud
 from app.schemas.user import UserGetSchema, UserPostSchema, UserPatchSchema
 
 class UserView(BaseBuildView):
-    component = UserCrud
+    crud_class = UserCrud
     get_schema = UserGetSchema
     post_schema = UserPostSchema
     patch_schema = UserPatchSchema
