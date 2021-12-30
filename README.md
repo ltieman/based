@@ -61,7 +61,7 @@ All of this is done with a constructor class that builds the View class as well 
 class, which lets me not have to do all that work every time. While FastAPI and FastAPI utils
 have some peculiarities which seem to keep me from being able to have the API view class as
 inheritable as I'd like, This Crud class is fully inheritable, and only requires 2 extra 
-lines of code to declare.
+lines of code to declare explicitly.
 
 ```python
 from app.models.base import BaseModel
