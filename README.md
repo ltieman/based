@@ -119,7 +119,7 @@ if __name__ == "__main__":
 ```
 
 ## ToDo:
-* Finish Endpoint Tests
+* ~~Finish Endpoint Tests~~
 * Document Existing Codebase with AutoGenerating Documentation
 * Incorporate Coverage
 * Streaming to Kafka
