@@ -19,4 +19,4 @@ class TableBase(object):
     updated = Column(DateTime, default=None, onupdate=datetime.now())
     archived = Column(DateTime)
 
-Base = declarative_base(cls=TableBase)
+BaseModel = declarative_base(cls=TableBase)

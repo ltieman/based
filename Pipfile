@@ -11,6 +11,7 @@ uvicorn = "*"
 gunicorn = "*"
 authlib = "*"
 alembic = "*"
+piccolo = "*"
 
 [dev-packages]
 pytest = "*"

@@ -9,6 +9,9 @@ class PostSchema(BaseModel):
     pass
 
 class GetSchema(BaseModel):
+    class Config:
+        orm_mode = True
+    id: int
     created: datetime
     archived: datetime = None
     modified: datetime = None
@@ -17,10 +20,8 @@ class GetSchema(BaseModel):
 class PatchSchema(BaseModel):
     pass
 
-class Webargs(BaseModel):
+class HeadSchema(BaseModel):
+    count: int
     limit: int = 20
     offset: int = 1
     show_archived: bool = False
-
-class HeadSchema(Webargs):
-    count: str

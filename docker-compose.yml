@@ -1,0 +1,49 @@
+version: "3.2"
+services:
+
+ redis:
+    image: docker.io/redis:alpine
+
+#    command: redis-server --requirepass sOmE_sEcUrE_pAsS
+
+    ports:
+     - "6379:6379"
+ redpanda:
+    command:
+    - redpanda
+    - start
+    - --smp
+    - '1'
+    - --reserve-memory
+    - 0M
+    - --overprovisioned
+    - --node-id
+    - '0'
+    - --kafka-addr
+    - PLAINTEXT://0.0.0.0:29092,OUTSIDE://0.0.0.0:9092
+    - --advertise-kafka-addr
+    - PLAINTEXT://redpanda:29092,OUTSIDE://localhost:9092
+    # NOTE: Please use the latest version here!
+    image: docker.vectorized.io/vectorized/redpanda:v21.9.5
+    container_name: redpanda-1
+    ports:
+    - 9092:9092
+    - 29092:29092
+#    volumes:
+#     - $PWD/redis-data:/var/lib/redis
+#      - $PWD/redis.conf:/usr/local/etc/redis/redis.conf
+
+#    environment:
+#     - REDIS_REPLICATION_MODE=master
+#
+#    networks:
+#      node_net:
+#        ipv4_address: 172.28.1.4
+#
+## networking for the Redis container
+#networks:
+#  node_net:
+#    ipam:
+#      driver: default
+#      config:
+#        - subnet: 172.28.0.0/16
