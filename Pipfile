@@ -11,11 +11,12 @@ uvicorn = "*"
 gunicorn = "*"
 authlib = "*"
 alembic = "*"
-piccolo = "*"
 
 [dev-packages]
 pytest = "*"
 faker = "*"
+livereload = "*"
+coveralls = "*"
 
 [requires]
 python_version = "3.9"

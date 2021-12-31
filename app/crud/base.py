@@ -25,7 +25,6 @@ class BaseCrud:
             if params['updated_since']:
                 #set query to return only rows created or updated since the date in the params
                 query = query.filter(cls.model.created >=params['updated_since']| cls.model.updated >= params['updated_since'])
-            #del params['updated_since']
         except:
             pass
         #for every query param that matches up with a field name, return rows with the value

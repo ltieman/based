@@ -113,5 +113,5 @@ def test_clean_up_two():
     session.commit()
     items = UnitTestBaseCrud.index(session=session)
     assert not items
-
+    #UnitTestsTable.__table__.drop(session)
 

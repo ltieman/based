@@ -15,13 +15,18 @@ import faker
 index_count = 40
 fake = faker.Faker()
 session = get_fastapi_sessionmaker()
-session = session.get_db().__next__()
 
-class UnitTestsTable(BaseModel):
+
+class UnitTestsTable2(BaseModel):
     name = Column(String)
 
+BaseModel.metadata.create_all(session.cached_engine)
+
+session = session.get_db().__next__()
+
 class UnitTestBaseCrud(BaseCrud):
-    model = UnitTestsTable
+    model = UnitTestsTable2
+
 
 class UnitTestPostSchema(PostSchema):
     name: str
@@ -34,7 +39,7 @@ class UnitTestPutSchema(UnitTestGetSchema):
     created: datetime  = None
 
 class UnitTestView(BaseBuildView):
-    model = UnitTestsTable
+    model = UnitTestsTable2
     get_schema = UnitTestGetSchema
     post_schema = UnitTestPostSchema
     patch_schema = UnitTestPostSchema
@@ -98,10 +103,10 @@ def test_update_put(api_post: Response):
 def test_UnitTestView_Auto_Component():
     view = UnitTestView()
     assert issubclass(view.crud_class, BaseCrud)
-    assert view.crud_class.model == UnitTestsTable
+    assert view.crud_class.model == UnitTestsTable2
 
 def test_clean_up_one():
-    session.query(UnitTestsTable).delete()
+    session.query(UnitTestsTable2).delete()
     session.commit()
     items = UnitTestBaseCrud.index(session=session)
     assert not items
@@ -163,8 +168,9 @@ def test_archive_and_unarchive():
     assert int(head.headers['query-length']) == 40
 
 def test_clean_up_two():
-    session.query(UnitTestsTable).delete()
+    session.query(UnitTestsTable2).delete()
     session.commit()
     items = UnitTestBaseCrud.index(session=session)
     assert not items
+    #UnitTestsTable.__table__.drop(session)
 
