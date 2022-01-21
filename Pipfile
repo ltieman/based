@@ -9,8 +9,8 @@ sqlalchemy = "*"
 fastapi-utils = "*"
 uvicorn = "*"
 gunicorn = "*"
-authlib = "*"
 alembic = "*"
+fastapi-cloudauth = "*"
 
 [dev-packages]
 pytest = "*"
