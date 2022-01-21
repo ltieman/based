@@ -2,6 +2,8 @@ from fastapi_cloudauth.cognito import Cognito, CognitoCurrentUser, CognitoClaims
 from fastapi_cloudauth.auth0 import Auth0, Auth0CurrentUser, Auth0Claims
 from .config import Config
 
+
+#have no idea if this will work, but i think it will?
 class CognitoOptionalUser(CognitoCurrentUser):
     def __init__(self, *args,**kwargs):
         try:
