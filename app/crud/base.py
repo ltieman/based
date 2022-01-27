@@ -43,7 +43,7 @@ class BaseCrud:
 
     @classmethod
     def index(cls, session: Session,
-              params: BaseModel= None,
+              params: dict= None,
               for_head: bool = False)->Union[List[BaseModel], Query]:
         if not params:
             params = {}

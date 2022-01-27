@@ -9,6 +9,7 @@ class Config(BaseSettings):
     COGNITO_REGION: str = None
     COGNITO_USERPOOLID: str = None
     COGNITO_CLIENTID: str = None
+    COGNITO_DOMAIN: str = None
     AUTH0_DOMAIN: str = None
     AUTH0_CUSTOMAPI: str = None
     AUTH0_CLIENTID: str = None

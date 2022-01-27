@@ -12,9 +12,12 @@ class BaseBuildView:
     post_schema: PostSchema
     patch_schema: PatchSchema
     put_schema: PatchSchema
-    available_routes: list = ['get','index','post','patch','put','delete','head','undelete']
+    available_routes: List[str] = ['get','index','post','patch','put','delete','head','undelete']
+    require_auth: bool = True
+    minimum_role: int = 0
     crud_class: BaseCrud = None
     model: BaseModel = None
+    added_methods: List[str] = []
 
     def __init__(self):
         #uses a precomposed crud_class if needed, otherwise generates one for you.
@@ -154,6 +157,9 @@ class BaseBuildView:
                                                      )
                 self.request.state.db.close()
                 return {}
+
+            for func in self.added_methods:
+                eval(func)
 
         self.router = router
         self.view = BaseView

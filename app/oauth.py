@@ -1,7 +1,7 @@
 from fastapi_cloudauth.cognito import Cognito, CognitoCurrentUser, CognitoClaims
 from fastapi_cloudauth.auth0 import Auth0, Auth0CurrentUser, Auth0Claims
 from .config import Config
-
+import boto3
 
 #have no idea if this will work, but i think it will?
 class CognitoOptionalUser(CognitoCurrentUser):
@@ -29,6 +29,8 @@ if Config.COGNITO_REGION and Config.COGNITO_CLIENTID and Config.COGNITO_USERPOOL
         userPoolId=Config.COGNITO_USERPOOLID,
         client_id=Config.COGNITO_CLIENTID
     )
+    cognito_client = boto3.client('cognito-idp', region_name=Config.COGNITO_REGION)
+
 elif Config.AUTH0_DOMAIN and Config.AUTH0_CLIENTID and Config.AUTH0_CUSTOMAPI:
     auth = Auth0(domain=Config.AUTH0_DOMAIN,
                  customAPI=Config.AUTH0_CUSTOMAPI)
