@@ -5,7 +5,10 @@ Based is a light API framework built on top of FastAPI and FastAPI Utils.
 Other projects (like Piccolo) do similar things, but Based is designed to be extremely 
 flexible (and use SQLAlchemy), and offer an expressive but light REST API framework that can
 be built with very little code, or work as a base for whatever expansion I need 
-(and use SQLAlchemy).
+(and use SQLAlchemy).  
+
+I'm also maybe going to go a little crazy here, and try out some bad ideas outside of the main branch.
+If they aren't bad ideas, I'll move them to main.
 
 ## Quick Start 
 Below is an app I use in some of my tests.  All I am really doing is defining my interfaces,
