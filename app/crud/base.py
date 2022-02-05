@@ -36,19 +36,27 @@ class BaseCrud:
     @classmethod
     def get(cls,
             session: Session,
-            id: int)->BaseModel:
+            id: int,
+            query: Query)->BaseModel:
         #simple get by id
-        item = session.query(cls.model).filter(cls.model.id == id).first()
+        if query:
+            item = query.filter(cls.model.id == id).first()
+        else:
+            item = session.query(cls.model).filter(cls.model.id == id).first()
         return item
 
     @classmethod
     def index(cls, session: Session,
               params: dict= None,
-              for_head: bool = False)->Union[List[BaseModel], Query]:
+              for_head: bool = False,
+              query: Query= None)->Union[List[BaseModel], Query]:
         if not params:
             params = {}
-        query = session.query(cls.model)
+        #allow for passing in query through super()
+        if not query:
+            query = session.query(cls.model)
         #this modifies the query based on the query params
+        #if we dont want to do this here, don't pass it in from super()
         query = cls.index_params(params=params,
                                  query=query)
 
@@ -62,7 +70,6 @@ class BaseCrud:
     def post(cls,
              session: Session,
              data: BaseModel)->BaseModel:
-
         #very straight forward sql alchemy create row
         item = cls.model(**data.dict())
         session.add(item)
@@ -74,13 +81,12 @@ class BaseCrud:
     def update(cls,
                session,
                id: int,
-               data: BaseModel)->BaseModel:
-
-        #again, standard SQL Alchemy update statment
+               data: BaseModel,
+               query: Query = None)->BaseModel:
         up_query = update(cls.model).where(cls.model.id == id).values(**data.dict(exclude_unset=True))
         session.execute(up_query)
         session.commit()
-        return cls.get(session,id)
+        return cls.get(session,id, query=query)
 
     @classmethod
     def delete(cls,
@@ -99,11 +105,18 @@ class BaseCrud:
     @classmethod
     def head(cls,
              session: Session,
-             params: BaseModel)->HeadSchema:
+             params: BaseModel,
+             query: Query)->HeadSchema:
         #get back the exact query that we would get from the index method
-        query = cls.index(session=session,
-                          params=params,
-                          for_head=True)
+        if query:
+            query = cls.index(session=session,
+                              params=params,
+                              for_head=True,
+                              query=query)
+        else:
+            query = cls.index(session=session,
+                              params=params,
+                              for_head=True)
         #get the count of the rows on the dataset
         return query.count()
         #give it back along with the params we were given

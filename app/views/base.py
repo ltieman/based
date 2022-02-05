@@ -4,7 +4,7 @@ from fastapi_utils.cbv import cbv
 from app.schemas.base import PostSchema, PatchSchema, GetSchema
 from app.crud.base import BaseCrud
 from app.models.base import BaseModel
-from typing import List
+from typing import List, Union
 from fastapi_utils.inferring_router import InferringRouter
 
 class BaseBuildView:
@@ -13,11 +13,11 @@ class BaseBuildView:
     patch_schema: PatchSchema
     put_schema: PatchSchema
     available_routes: List[str] = ['get','index','post','patch','put','delete','head','undelete']
+    additional_routes: Union[InferringRouter,APIRouter]
     require_auth: bool = True
     minimum_role: int = 0
     crud_class: BaseCrud = None
     model: BaseModel = None
-    added_methods: List[str] = []
 
     def __init__(self):
         #uses a precomposed crud_class if needed, otherwise generates one for you.
@@ -66,7 +66,10 @@ class BaseBuildView:
                 items = crudclass.index(session=self.request.state.db,
                                         params=params
                                         )
-                schema = [get_schema.from_orm(item) for item in items]
+                try:
+                    schema = [get_schema.from_orm(item) for item in items]
+                except TypeError:
+                    schema = []
                 self.request.state.schema = schema
                 self.request.state.db.close()
                 return schema
@@ -157,10 +160,13 @@ class BaseBuildView:
                                                      )
                 self.request.state.db.close()
                 return {}
-
-            for func in self.added_methods:
-                eval(func)
-
-        self.router = router
+        # if we need to add additional routes beyond the core crud api
+        # then we need to add the router for the core crud api to those endpoints router
+        # as APIRouters have problems running inside of Infering Routers
+        if self.additional_routes:
+            self.additional_routes.include_router(router)
+            self.router = self.additional_routes
+        else:
+            self.router = router
         self.view = BaseView
 

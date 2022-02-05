@@ -1,6 +1,6 @@
 from fastapi_cloudauth.cognito import Cognito, CognitoCurrentUser, CognitoClaims
 from fastapi_cloudauth.auth0 import Auth0, Auth0CurrentUser, Auth0Claims
-from .config import Config
+from .config import config
 import boto3
 
 #have no idea if this will work, but i think it will?
@@ -19,23 +19,23 @@ class Auth0OptionalUser(Auth0CurrentUser):
             self = None
 
 
-if Config.COGNITO_REGION and Config.COGNITO_CLIENTID and Config.COGNITO_USERPOOLID:
-    auth = Cognito(region=Config.COGNITO_REGION,
-                   userPoolId=Config.COGNITO_USERPOOLID,
-                   client_id=Config.COGNITO_CLIENTID
+if config.COGNITO_REGION and config.COGNITO_CLIENTID and config.COGNITO_USERPOOLID:
+    auth = Cognito(region=config.COGNITO_REGION,
+                   userPoolId=config.COGNITO_USERPOOLID,
+                   client_id=config.COGNITO_CLIENTID
                    )
     get_current_user = CognitoOptionalUser(
-        region=Config.COGNITO_REGION,
-        userPoolId=Config.COGNITO_USERPOOLID,
-        client_id=Config.COGNITO_CLIENTID
+        region=config.COGNITO_REGION,
+        userPoolId=config.COGNITO_USERPOOLID,
+        client_id=config.COGNITO_CLIENTID
     )
-    cognito_client = boto3.client('cognito-idp', region_name=Config.COGNITO_REGION)
+    cognito_client = boto3.client('cognito-idp', region_name=config.COGNITO_REGION)
 
-elif Config.AUTH0_DOMAIN and Config.AUTH0_CLIENTID and Config.AUTH0_CUSTOMAPI:
-    auth = Auth0(domain=Config.AUTH0_DOMAIN,
-                 customAPI=Config.AUTH0_CUSTOMAPI)
+elif config.AUTH0_DOMAIN and config.AUTH0_CLIENTID and config.AUTH0_CUSTOMAPI:
+    auth = Auth0(domain=config.AUTH0_DOMAIN,
+                 customAPI=config.AUTH0_CUSTOMAPI)
     get_current_user = Auth0OptionalUser(
-        domain=Config.AUTH0_DOMAIN,
-        client_id=Config.COGNITO_CLIENTID
+        domain=config.AUTH0_DOMAIN,
+        client_id=config.COGNITO_CLIENTID
     )
 

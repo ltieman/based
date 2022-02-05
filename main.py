@@ -1,6 +1,7 @@
 from app.views import webapp
 from app.middleware import register_middleware
 import uvicorn
+import gunicorn
 
 register_middleware(webapp)
 

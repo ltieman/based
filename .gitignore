@@ -1,1 +1,6 @@
 *venv*
+*.pem
+pull_remote_db.sh
+arm-ssh.sh
+*.db
+gunicorn.conf.py

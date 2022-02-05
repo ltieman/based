@@ -1,38 +1,35 @@
 from .base import BaseBuildView
-from app.config import Config
+from app.config import config
 from fastapi_utils.cbv import cbv
 from fastapi.responses import RedirectResponse
 from app.crud import UserCrud
 from app.schemas.user import UserGetSchema, UserLoginPostSchema, UserPatchSchema, UserCreatePostSchema
+from fastapi import APIRouter
 
-router = None
+additional_router = APIRouter()
 
+@additional_router.post("/login/")
+def login(data: UserLoginPostSchema) -> UserGetSchema:
+    item = user_view.crud_class.login(data)
+    item = UserGetSchema.from_orm(item)
+    return item
 
+@additional_router.get("/login",response_class=RedirectResponse)
+def login_redirect():
+    url = f"https://{config.COGNITO_DOMAIN}/login?response_type=token&client_id={config.COGNITO_CLIENTID}&redirect_uri={config.CLEAN_URL}/oauth2/idpresponse"
+    return url
 
-login = """@router.post("/login/")
-            def login(self,
-                data: UserLoginPostSchema)->UserGetSchema:
-                item = crud_class.login(data)
-                item = UserGetSchema.from_orm(item)
-                return item
-        """
-
-login_redirect = f"""@router.get("/login")
-                    def login_redirect(self):
-                        return RedirectResponse(
-                        https://{Config.COGNITO_DOMAIN}/login?response_type=token&client_id={Config.COGNITO_CLIENTID}&redirect_uri={Config.CLEAN_URL}/oauth2/idpresponse      
-                """
-
-login_idpresponse = f"""@router.get("/oauth2/idpresponse")
-                        def login_idpresponse(self):
-                            pass
-"""
-
-
+@additional_router.get("/oauth2/idpresponse")
+def login_idpresponse():
+    pass
 
 class UserView(BaseBuildView):
     crud_class = UserCrud
     get_schema = UserGetSchema
     post_schema = UserCreatePostSchema
     patch_schema = UserPatchSchema
-    added_methods = [login, login_redirect]
+    additional_routes = additional_router
+
+user_view = UserView()
+
+
