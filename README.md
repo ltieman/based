@@ -1,6 +1,6 @@
 # Based
 
-Based is a light API framework built on top of FastAPI and FastAPI Utils.
+Based is a light API framework built on top of FastAPI and FastAPI Utils.  It is still a very early WIP.
 
 Other projects (like Piccolo) do similar things, but Based is designed to be extremely 
 flexible (and use SQLAlchemy), and offer an expressive but light REST API framework that can
