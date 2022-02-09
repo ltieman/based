@@ -9,7 +9,7 @@ class Code_Token(BaseModel):
     token = Column(String, nullable=False)
     code = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
-    user = relationship("user",backref='children')
+    #user = relationship("user",backref='children')
 
 
 

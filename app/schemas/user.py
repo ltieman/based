@@ -8,7 +8,7 @@ class UserLoginPostSchema(PostSchema):
     email: str
     password: str
 
-class UserCreatePostSchema(UserLoginPostSchema):
+class UserCreatePostSchema(PostSchema):
     username: str
     sub: str
     email: str

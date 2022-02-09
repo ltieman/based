@@ -33,10 +33,13 @@ if config.COGNITO_REGION and config.COGNITO_CLIENTID and config.COGNITO_USERPOOL
             user_json = {attribute['Name']: attribute['Value'] for attribute in user.UserAttributes}
             user_json.update({"username": user['Username']})
             user_schema = UserCreatePostSchema(**user_json)
-            user, *ignore = cls.index(session=session,
-                                           params={
-                                               "sub": user_schema.sub
-                                           })
+            try:
+                user, *ignore = cls.index(session=session,
+                                               params={
+                                                   "sub": user_schema.sub
+                                               })
+            except:
+                user = None
             if user:
                 user = cls.update(session=session,
                                        id=user.id,
@@ -51,8 +54,8 @@ if config.COGNITO_REGION and config.COGNITO_CLIENTID and config.COGNITO_USERPOOL
                                            )
             if not code_token:
                 code_token = CodeTokenSchema(code=code, token=token_json['access_token'], user_id=user.id)
-                code_token = CodeTokenCrud.post(session=session,
-                                                data=code_token)
+                CodeTokenCrud.post(session=session,
+                                    data=code_token)
 
 
     class UserCrud(CognitoUserCrud):
