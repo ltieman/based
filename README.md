@@ -66,9 +66,13 @@ have some peculiarities which seem to keep me from being able to have the API vi
 inheritable as I'd like, This Crud class is fully inheritable, and only requires 2 extra 
 lines of code to declare explicitly.
 
+This also makes it difficult to add additional methods to the router.  However, because its
+all just FastAPI, you can specify an additional router, and the class will combine the two routers
+at instantiation.
+
 ```python
 from app.models.base import BaseModel
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter
 from sqlalchemy import Column, String
 from app.crud.base import BaseCrud
 from app.views.base import BaseBuildView
@@ -89,6 +93,14 @@ class TestPostSchema(PostSchema):
 class TestGetSchema(TestPostSchema, GetSchema):
     pass
 
+#this is an additional router to add a json_schema endpoint, assigned to the View Class
+#as TestView.additional_router, and will here be available at /api/test/json-schema
+additional_router = APIRouter()
+
+@additional_router.get("/json-schema")
+async def json_schema():
+    return TestGetSchema.schema_json()
+    
 
 # this is the new CrudClass        
 class TestCrud(BaseCrud):
@@ -107,19 +119,23 @@ class TestView(BaseBuildView):
     # model = TestTable
     # with
     crud_class = TestCrud
-
+    additional_routes = additional_router
     get_schema = TestGetSchema
     post_schema = TestPostSchema
     patch_schema = TestPostSchema
 
 
-app = FastAPI()
-app.include_router(TestView().router, tags=['Test'])
+app = FastAPI(root_path='/api')
+app.include_router(TestView().router, tags=['Test'], prefix='/test')
 register_middleware(app)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
 ```
+
+
+
+
 
 ## ToDo:
 * ~~Finish Endpoint Tests~~
