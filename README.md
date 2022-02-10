@@ -1,14 +1,17 @@
 # Based
 
-Based is a light API framework built on top of FastAPI and FastAPI Utils.
+Based is a luxury API framework built on top of FastAPI and FastAPI Utils.  Originally it was
+intended to be a light API framework, but then I decided that I was lieing to myself when I said
+that.  Based is an opinionated API framework that wants to give you all the tools you might want,
+and then lets you pick which pieces you want to use.  The intention is to include everything from
+authentication with Cognito and Auth0, static and dynamic RBAC, s3 file upload support, ELT with an Airbyte Connector,
+kafka integration with Faust, and some other wild ideas.  And to do it the way I want to do it, in
+a classful structure that I like hense, Based.
 
 Other projects (like Piccolo) do similar things, but Based is designed to be extremely 
 flexible (and use SQLAlchemy), and offer an expressive but light REST API framework that can
 be built with very little code, or work as a base for whatever expansion I need 
-(and use SQLAlchemy).  
-
-I'm also maybe going to go a little crazy here, and try out some bad ideas outside of the main branch.
-If they aren't bad ideas, I'll move them to main.
+(and use SQLAlchemy).
 
 ## Quick Start 
 Below is an app I use in some of my tests.  All I am really doing is defining my interfaces,
