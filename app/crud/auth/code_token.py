@@ -1,4 +1,4 @@
-from .base import BaseCrud
+from app.crud.base import BaseCrud
 from app.models import Code_Token
 from sqlalchemy.orm import Session, Query
 from app.schemas.base import BaseModel
@@ -8,8 +8,8 @@ from app.config import config
 from cryptography.fernet import Fernet
 
 fernet = Fernet(config.SECRET_KEY.encode())
+
 if config.COGNITO_REGION:
-    from app.oauth import cognito_client
     class CodeTokenCrud(BaseCrud):
         model = Code_Token
 
@@ -33,11 +33,6 @@ if config.COGNITO_REGION:
             except:
                 return None
 
-        @classmethod
-        def validate_code(cls,
-                          session: Session,
-                          id: str):
-            item = cls.get(session=session)
-            user = cognito_client.get_user(AccessToken=item.token)
+
 
 

@@ -1,8 +1,8 @@
 from .base import GetSchema, PostSchema, PatchSchema
 from pydantic import Field
+from typing import List
 
-class UserGetSchema(GetSchema):
-    token: str
+
 
 class UserLoginPostSchema(PostSchema):
     email: str
@@ -16,6 +16,11 @@ class UserCreatePostSchema(PostSchema):
     first_name: str = Field(None, alias='given_name')
     last_name: str = Field(None, alias='family_name')
 
+class UserGetSchema(GetSchema, UserCreatePostSchema):
+    pass
+
+class UserWithRoles(UserGetSchema):
+    roles : List[str] = []
 
 class UserPatchSchema(PatchSchema):
     token: str

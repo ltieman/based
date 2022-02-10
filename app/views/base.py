@@ -1,10 +1,12 @@
-from fastapi import Depends, Request, APIRouter, Response
+from fastapi import Depends, Request, APIRouter, Response, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi_utils.cbv import cbv
+from app.oauth.callable import AuthRoleCheck
 from app.schemas.base import PostSchema, PatchSchema, GetSchema
+from app.schemas.user import UserWithRoles
 from app.crud.base import BaseCrud
 from app.models.base import BaseModel
-from typing import List, Union
+from typing import List, Union, Optional
 from fastapi_utils.inferring_router import InferringRouter
 
 class BaseBuildView:
@@ -14,8 +16,16 @@ class BaseBuildView:
     put_schema: PatchSchema
     available_routes: List[str] = ['get','index','post','patch','put','delete','head','undelete']
     additional_routes: Union[InferringRouter,APIRouter]
-    require_auth: bool = True
-    minimum_role: int = 0
+    require_auth: bool = False
+    required_role: List[str] = []
+    role_get: List[str] = []
+    role_index: List[str] = []
+    role_post: List[str] = []
+    role_patch:  List[str] = []
+    role_put: List[str] = []
+    role_delete: List[str] = []
+    role_head: List[str] = []
+    role_undelete: List[str] = []
     crud_class: BaseCrud = None
     model: BaseModel = None
 
@@ -29,6 +39,14 @@ class BaseBuildView:
         router = InferringRouter()
         get_schema = self.get_schema
         post_schema = self.post_schema
+        get_callable = AuthRoleCheck(role=self.required_role+self.role_get, required=self.require_auth)
+        index_callable = AuthRoleCheck(role=self.required_role+self.role_index, required=self.require_auth)
+        post_callable = AuthRoleCheck(role=self.required_role+self.role_post, required=self.require_auth)
+        patch_callable = AuthRoleCheck(role=self.required_role+self.role_patch, required=self.require_auth)
+        put_callable = AuthRoleCheck(role=self.required_role+self.role_patch, required=self.require_auth)
+        delete_callable = AuthRoleCheck(role=self.required_role+self.role_delete, required=self.require_auth)
+        head_callable = AuthRoleCheck(role=self.required_role+self.role_head, required=self.require_auth)
+        undelete_callable = AuthRoleCheck(role=self.required_role+self.role_undelete, required=self.require_auth)
         try:
             patch_schema = self.patch_schema
         except:
@@ -47,7 +65,9 @@ class BaseBuildView:
 
             @router.get("/{id}")
             def get(self,
-                    id: int) -> get_schema:
+                    id: int,
+                    user: UserWithRoles = Depends(get_callable)
+                    ) -> get_schema:
                 if 'get' not in self.available_routes:
                     raise HTTPException(405)
                 item = crudclass.get(session=self.request.state.db,
@@ -59,7 +79,8 @@ class BaseBuildView:
 
             @router.get("/")
             def index(self,
-                      params: dict = Depends(crudclass.query_params)
+                      params: dict = Depends(crudclass.query_params),
+                      user: UserWithRoles = Depends(index_callable)
                       ) -> List[get_schema]:
                 if 'index' not in self.available_routes:
                     raise HTTPException(405)
@@ -76,7 +97,9 @@ class BaseBuildView:
 
             @router.post("/",status_code=201)
             def post(self,
-                     item: post_schema)->get_schema:
+                     item: post_schema,
+                user: UserWithRoles = Depends(post_callable),
+            )->get_schema:
                 if 'post' not in self.available_routes:
                     raise HTTPException(405)
                 item = crudclass.post(session=self.request.state.db,
@@ -90,7 +113,8 @@ class BaseBuildView:
             @router.patch("/{id}",status_code=202)
             def patch(self,
                       id: int,
-                      item: patch_schema)->get_schema:
+                      item: patch_schema,
+                      user: UserWithRoles = Depends(patch_callable))->get_schema:
                 if 'patch' not in self.available_routes:
                     raise HTTPException(405)
                 item = crudclass.update(session=self.request.state.db,
@@ -103,7 +127,8 @@ class BaseBuildView:
 
             @router.put("/",status_code=202)
             def put(self,
-                    item: put_schema)->get_schema:
+                    item: put_schema,
+                    user: UserWithRoles = Depends(put_callable))->get_schema:
                 if 'put' not in self.available_routes:
                     raise HTTPException(405)
                 try:
@@ -125,7 +150,9 @@ class BaseBuildView:
 
             @router.delete("/{id}",status_code=202)
             def delete(self,
-                       id: int)->get_schema:
+                       id: int,
+                       user: UserWithRoles = Depends(delete_callable)
+                       )->get_schema:
                 if 'delete' not in self.available_routes:
                     raise HTTPException(405)
                 item = crudclass.delete(session=self.request.state.db,
@@ -137,7 +164,9 @@ class BaseBuildView:
 
             @router.delete("/undo/{id}",status_code=202)
             def undelete(self,
-                         id: int)->get_schema:
+                         id: int,
+                         user: UserWithRoles = Depends(undelete_callable)
+                         )->get_schema:
                 if 'undelete' not in self.available_routes:
                     raise HTTPException(405)
                 item = crudclass.undelete(session=self.request.state.db,
@@ -151,6 +180,7 @@ class BaseBuildView:
             def head(self,
                      response: Response,
                      params:dict = Depends(crudclass.query_params),
+                     user: UserWithRoles = Depends(head_callable)
                      ):
                 if 'head' not in self.available_routes:
                     raise HTTPException(405)
