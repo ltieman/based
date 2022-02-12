@@ -1,5 +1,6 @@
 import enum
 
+
 class RoleEnum(enum.Enum):
     OPEN = 0
     LOGIN = 10

@@ -14,23 +14,27 @@ from app.db import get_db
 
 additional_router = APIRouter()
 if config.COGNITO_REGION:
-    @additional_router.get("/login",response_class=RedirectResponse)
+
+    @additional_router.get("/login", response_class=RedirectResponse)
     async def aws_cognito_auth_flow_start():
         url = f"https://{config.COGNITO_DOMAIN}/login?response_type=code&client_id={config.COGNITO_CLIENTID}&redirect_uri={config.CLEAN_URL}/users/login-callback"
         return url
 
-    @additional_router.get("/login-callback",response_class=RedirectResponse)
-    def aws_cognito_get_token(code:str,
-                    request: Request,
-                    response: Response,
-                    session: Session = Depends(get_db)):
+    @additional_router.get("/login-callback", response_class=RedirectResponse)
+    def aws_cognito_get_token(
+        code: str,
+        request: Request,
+        response: Response,
+        session: Session = Depends(get_db),
+    ):
         try:
             AuthCrud.auth_callback(code=code, session=session, response=response)
             session.close()
         except Exception as e:
             session.close()
-            raise exceptions.HTTPException(401,"Not Authorized")
+            raise exceptions.HTTPException(401, "Not Authorized")
         return f"{config.CLEAN_URL}/users/"
+
 
 class UserView(BaseBuildView):
     crud_class = AuthCrud
@@ -44,8 +48,7 @@ class UserView(BaseBuildView):
     role_undelete = RoleEnum.ADMIN
     role_get = RoleEnum.ADMIN
     role_index = RoleEnum.LOGIN
-    available_routes = ['get','index','delete','undelete']
+    available_routes = ["get", "index", "delete", "undelete"]
+
 
 user_view = UserView()
-
-

@@ -11,5 +11,4 @@ class User(BaseModel):
     username = Column(String, nullable=False)
     email = Column(String, nullable=False)
     email_verified = Column(Boolean, nullable=True)
-    sub = Column(String,nullable=False)
-
+    sub = Column(String, nullable=False)

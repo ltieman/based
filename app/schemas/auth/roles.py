@@ -3,7 +3,6 @@ from pydantic import Field
 from typing import List
 
 
-
 class RolesPostSchema(PostSchema):
     role: str
     user_id: int
@@ -12,4 +11,3 @@ class RolesPostSchema(PostSchema):
 
 class RolesGetSchema(GetSchema, RolesPostSchema):
     pass
-

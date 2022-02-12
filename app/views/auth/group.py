@@ -4,6 +4,7 @@ from app.oauth.callable import AuthRoleOrSelfCheck
 from app.oauth.roles import RoleEnum
 from app.schemas.group import GroupPostSchema, GroupGetSchema
 
+
 class GroupView(BaseBuildView):
     crud_class = GroupCrud
     auth_callable = AuthRoleOrSelfCheck
@@ -12,6 +13,16 @@ class GroupView(BaseBuildView):
     role_post = RoleEnum.POST
     get_schema = GroupGetSchema
     post_schema = GroupPostSchema
-    available_routes = ['get','index','post','patch','put','delete','head','undelete']
+    available_routes = [
+        "get",
+        "index",
+        "post",
+        "patch",
+        "put",
+        "delete",
+        "head",
+        "undelete",
+    ]
+
 
 group_view = GroupView()

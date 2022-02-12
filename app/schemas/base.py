@@ -2,15 +2,19 @@ from pydantic import BaseModel
 from datetime import datetime
 from typing import Union
 
+
 class ArchiveUpdate(BaseModel):
     archived: Union[datetime, None] = datetime.now()
+
 
 class PostSchema(BaseModel):
     pass
 
+
 class GetSchema(BaseModel):
     class Config:
         orm_mode = True
+
     id: int
     created: datetime
     archived: datetime = None
@@ -19,6 +23,7 @@ class GetSchema(BaseModel):
 
 class PatchSchema(BaseModel):
     pass
+
 
 class HeadSchema(BaseModel):
     count: int

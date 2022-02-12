@@ -4,6 +4,7 @@ from app.oauth.callable import AuthRoleOrSelfCheck
 from app.oauth.roles import RoleEnum
 from app.schemas.auth.roles import RolesPostSchema, RolesGetSchema
 
+
 class RoleView(BaseBuildView):
     model = Role
     auth_callable = AuthRoleOrSelfCheck
@@ -11,6 +12,16 @@ class RoleView(BaseBuildView):
     required_role = [RoleEnum.ADMIN]
     get_schema = RolesGetSchema
     post_schema = RolesPostSchema
-    available_routes = ['get','index','post','patch','put','delete','head','undelete']
+    available_routes = [
+        "get",
+        "index",
+        "post",
+        "patch",
+        "put",
+        "delete",
+        "head",
+        "undelete",
+    ]
+
 
 role_view = RoleView()
