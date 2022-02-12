@@ -37,18 +37,20 @@ class BaseBuildView:
             class AutoCrud(BaseCrud):
                 model = self.model
             self.crud_class = AutoCrud
+        else:
+            self.model = self.crud_class.model
         crudclass = self.crud_class
         router = InferringRouter()
         get_schema = self.get_schema
         post_schema = self.post_schema
-        get_callable = self.auth_callable(role=self.required_role+self.role_get, required=self.require_auth)
-        index_callable = self.auth_callable(role=self.required_role+self.role_index, required=self.require_auth)
-        post_callable = self.auth_callable(role=self.required_role+self.role_post, required=self.require_auth)
-        patch_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth)
-        put_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth)
-        delete_callable = self.auth_callable(role=self.required_role+self.role_delete, required=self.require_auth)
-        head_callable = self.auth_callable(role=self.required_role+self.role_head, required=self.require_auth)
-        undelete_callable = self.auth_callable(role=self.required_role+self.role_undelete, required=self.require_auth)
+        get_callable = self.auth_callable(role=self.required_role+self.role_get, required=self.require_auth, model=self.model)
+        index_callable = self.auth_callable(role=self.required_role+self.role_index, required=self.require_auth, model=self.model)
+        post_callable = self.auth_callable(role=self.required_role+self.role_post, required=self.require_auth, model=self.model)
+        patch_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth, model=self.model)
+        put_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth, model=self.model)
+        delete_callable = self.auth_callable(role=self.required_role+self.role_delete, required=self.require_auth, model=self.model)
+        head_callable = self.auth_callable(role=self.required_role+self.role_head, required=self.require_auth, model=self.model)
+        undelete_callable = self.auth_callable(role=self.required_role+self.role_undelete, required=self.require_auth, model=self.model)
         try:
             patch_schema = self.patch_schema
         except:

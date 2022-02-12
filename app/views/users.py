@@ -2,6 +2,7 @@ from .base import BaseBuildView
 from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud
+from app.oauth.callable import AuthRoleOrSelfCheck
 from app.schemas.user import UserGetSchema, UserPatchSchema, UserCreatePostSchema
 from fastapi import APIRouter
 from fastapi import exceptions
@@ -24,7 +25,7 @@ if config.COGNITO_REGION:
             request.state.db.close()
         except Exception as e:
             request.state.db.close()
-            raise exceptions.HTTPException(405,"Not Authorized")
+            raise exceptions.HTTPException(401,"Not Authorized")
         return f"{config.CLEAN_URL}/users/"
 
 class UserView(BaseBuildView):
@@ -34,6 +35,7 @@ class UserView(BaseBuildView):
     patch_schema = UserPatchSchema
     additional_routes = additional_router
     require_auth = True
+    auth_callable = AuthRoleOrSelfCheck
     role_delete = [RoleEnum.ADMIN]
     role_undelete = [RoleEnum.ADMIN]
     role_get = [RoleEnum.LOGIN]

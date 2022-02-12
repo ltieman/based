@@ -20,11 +20,11 @@ class AuthCrudBase(UserCrud):
 
     @classmethod
     def auth_callback(cls, *args, **kwargs):
-        raise HTTPException(405, "Not Authorized")
+        raise HTTPException(401, "Not Authorized")
 
     @classmethod
     def validate_code(cls, *args, **kwargs):
-        raise HTTPException(405, "Not Authorized")
+        raise HTTPException(401, "Not Authorized")
 
 
 
@@ -96,7 +96,7 @@ if config.COGNITO_REGION:
             try:
                 assert user_from_aws.sub == user_from_db.sub
             except:
-                raise HTTPException(405,"Not Authorized")
+                raise HTTPException(401,"Not Authorized")
             roles = cls.role_crud.index(session=session,
                                         params={"user_id":item.user_id})
             roles = list({

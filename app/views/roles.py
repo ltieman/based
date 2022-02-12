@@ -6,7 +6,7 @@ from app.schemas.roles import RolesPostSchema, RolesGetSchema
 
 class RoleView(BaseBuildView):
     model = Role
-    #auth_callable = AuthRoleOrSelfCheck
+    auth_callable = AuthRoleOrSelfCheck
     require_auth = True
     required_role = [RoleEnum.ADMIN]
     get_schema = RolesGetSchema
