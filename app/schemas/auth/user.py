@@ -1,5 +1,5 @@
 from app.schemas.base import GetSchema, PostSchema, PatchSchema
-from pydantic import Field
+from pydantic import Field, BaseModel
 from typing import List
 from app.oauth.roles import RoleEnum
 from .roles import RolesGetSchema
@@ -29,5 +29,13 @@ class UserWithRoles(UserGetSchema):
     group_roles: List[RolesGetSchema] =[]
     authorized_groups: List[int] = []
 
-class UserPatchSchema(PatchSchema):
-    token: str
+
+class AnonymousUser(BaseModel):
+    roles: List[str] = [RoleEnum.OPEN.name]
+    authorized_groups: List[int] = []
+    group_roles: List[RolesGetSchema] = []
+
+    def __nonzero__(self):
+        ##this will override group security for endpoints marked for open use
+        return False
+

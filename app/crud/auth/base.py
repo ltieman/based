@@ -99,6 +99,8 @@ if config.COGNITO_REGION:
         def validate_code(cls,
                           session: Session,
                           code: str):
+            limit = 50
+            offset = 0
             item = cls.code_token_crud.get(session=session,
                                            id = code)
             user_from_aws = cls.get_user_from_aws_for_token(item.token)
@@ -108,16 +110,25 @@ if config.COGNITO_REGION:
                 assert user_from_aws.sub == user_from_db.sub
             except:
                 raise HTTPException(401,"Not Authorized")
-            roles = cls.role_crud.index(session=session,
-                                        params={"user_id":item.user_id})
-            roles = list({
+            roles = []
+            roles_pull = []
+            while len(roles_pull) == limit or offset == 0:
+                roles_pull = cls.role_crud.index(session=session,
+                                                 params={"user_id": item.user_id,
+                                                         "limit": limit,
+                                                         "offset": offset})
+                offset += limit
+                roles += roles_pull
+
+
+            top_roles = list({
                 role.role for role in roles if role.group_id is None
             })
-            group_roles = list({
+            group_roles =list({
                 role for role in roles if role.group_id is not None
             })
             user_to_return = UserWithRoles.from_orm(user_from_db)
-            user_to_return.roles = roles
+            user_to_return.roles = top_roles
             user_to_return.group_roles = group_roles
             return user_to_return
 

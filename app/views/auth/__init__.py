@@ -11,6 +11,6 @@ auth_router.include_router(router=group_view.router,
 auth_router.include_router(router=role_view.router,
                            prefix='/roles',
                            tags=['Groups','Users'])
-auth_router.include_router(router=user_view,
+auth_router.include_router(router=user_view.router,
                            prefix='/users',
                            tags=['Users'])

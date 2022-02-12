@@ -1,5 +1,5 @@
 from fastapi.requests import Request
-from app.schemas.user import UserWithRoles
+from app.schemas.auth.user import UserWithRoles, AnonymousUser
 from sqlalchemy.orm import Session
 from app.models.base import BaseModel
 from app.oauth.roles import RoleEnum
@@ -21,7 +21,11 @@ class AuthCallable:
 
     def __call__(self, request: Request,session: Session = Depends(get_db)):
         try:
-            user = self.validate_code(session, request.cookies['AUTH-TOKEN'])
+            try:
+                user = self.validate_code(session, request.cookies['AUTH-TOKEN'])
+
+            except:
+                user = AnonymousUser()
             self.additional_validation(user,request)
         except Exception as e:
             if self.required:
@@ -48,9 +52,14 @@ class AuthCallable:
     def validate_code(self,
                       session: Session,
                       code: str):
-        validated_user = AuthCrud.validate_code(session=session,
-                                                    code=code)
-        session.close()
+        try:
+            validated_user = AuthCrud.validate_code(session=session,
+                                                        code=code)
+            validated_user.authorized_groups = [group_role.group_id for group_role in validated_user.group_roles if
+                                      RoleEnum[group_role].value >= self.role.value]
+        except:
+            session.close()
+            raise
         return validated_user
 
 
@@ -62,23 +71,26 @@ class AuthRoleCheck(AuthCallable):
         self.model = model
 
     def auth_logic(self, user: UserWithRoles):
+        auth_status = False
         if RoleEnum.ADMIN.name in user.roles:
-            return user
-        if hasattr(self.model, 'group_id') or self.model.__name__.lower() == 'group':
-            user.authorized_groups = [group_role.group_id for group_role in user.group_roles if RoleEnum[group_role].value >= self.role.value]
-            if user.authorized_groups:
-                return user
+            auth_status = True
         if self.role:
             roles = [role for role in user.roles if RoleEnum[role].value >= self.role.value]
-            if not roles:
-                raise HTTPException(401, "Not Authorized")
-        return user
+            if roles:
+                auth_status = True
+        if (hasattr(self.model, 'group_id') or self.model.__name__.lower() == 'group') and user.authorized_groups:
+                auth_status = True
+        if auth_status:
+            return user
+        else:
+            raise HTTPException('401', 'Not Authorized')
 
 
 def AuthRoleOrSelfCheck(self, role: List[str], required: bool = False, model: BaseModel = None):
-    auth_check = AuthRoleCheck(role=role, required=required, override=True)
+    auth_check = AuthRoleCheck(role=role, required=required, override=True, model=model)
     async def self_check(request: Request, session: Session = Depends(get_db)):
         user, role_check = auth_check(request=request, session=session)
+        session.close()
         if role_check:
             return user
         try:

@@ -5,26 +5,33 @@ from sqlalchemy.orm import Session, Query
 from fastapi.exceptions import HTTPException
 from typing import List, Union
 from app.oauth.roles import RoleEnum
-from sqlalchemy import update, or_, and_
+from sqlalchemy import update
 from app.schemas.base import ArchiveUpdate, HeadSchema
-from app.schemas.user import UserWithRoles
+from app.schemas.auth.user import UserWithRoles
 from dateutil.parser import parse
 
 class BaseCrud:
     model: SQLBaseModel
 
     @classmethod
-    def apply_query_security(cls, query: Query, user: UserWithRoles=None):
-        if RoleEnum.ADMIN.name in user.roles:
+    def apply_query_security(cls,
+                             query: Query,
+                             user: UserWithRoles=None):
+        if not user:
             return query
-        if user and hasattr(cls.model, 'group_id'):
+        elif RoleEnum.ADMIN.name in user.roles:
+            return query
+        elif user and hasattr(cls.model, 'group_id'):
             query = query.filter(cls.model.group_id.in_(user.authorized_groups))
-        if user and cls.model.__name__.lower() == 'group':
+        elif user and cls.model.__name__.lower() == 'group':
             query = query.filter(cls.model.id.in_(user.authorized_groups))
         return query
 
     @classmethod
-    def apply_patch_security(cls, data:BaseModel, id: int, user: UserWithRoles = None):
+    def apply_patch_security(cls,
+                             data:BaseModel,
+                             id: int,
+                             user: UserWithRoles = None):
         if not user:
             pass
         elif RoleEnum.ADMIN.name in user.roles:
@@ -41,8 +48,12 @@ class BaseCrud:
                 raise HTTPException("401", "Not Authorized")
 
     @classmethod
-    def apply_post_security(cls, data: BaseModel, user: UserWithRoles=None):
-        if user and (hasattr(data,'group_id') or hasattr(cls.model, 'group_id')):
+    def apply_post_security(cls,
+                            data: BaseModel,
+                            user: UserWithRoles=None):
+        if not user:
+            pass
+        elif user and (hasattr(data,'group_id') or hasattr(cls.model, 'group_id')):
             try:
                 assert data.group_id in user.authorized_groups
             except:
@@ -176,7 +187,10 @@ class BaseCrud:
 
 
     @staticmethod
-    def query_params(limit: int = 20, offset: int = 0, show_archived: bool = False, updated_since: datetime = None):
+    def query_params(limit: int = 20,
+                     offset: int = 0,
+                     show_archived: bool = False,
+                     updated_since: datetime = None):
         #this code takes the parameters specified above for use as query parameters and returns them as a dictionary
         #as well as doing a little bit of parsing
         return BaseCrud.__query_params__(**locals())
