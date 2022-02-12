@@ -3,12 +3,14 @@ from fastapi.exceptions import HTTPException
 from fastapi_utils.cbv import cbv
 from enum import Enum
 from app.oauth.callable import AuthRoleCheck
+from sqlalchemy.orm import Session
 from app.schemas.base import PostSchema, PatchSchema, GetSchema
 from app.schemas.user import UserWithRoles
 from app.crud.base import BaseCrud
 from app.models.base import BaseModel
 from typing import List, Union, Optional
 from fastapi_utils.inferring_router import InferringRouter
+from app.db import get_db
 
 class BaseBuildView:
     get_schema: GetSchema
@@ -70,25 +72,27 @@ class BaseBuildView:
             @router.get("/{id}")
             def get(self,
                     id: int,
-                    user: UserWithRoles = Depends(get_callable)
+                    user: UserWithRoles = Depends(get_callable),
+                    session: Session = Depends(get_db)
                     ) -> get_schema:
                 if 'get' not in self.available_routes:
                     raise HTTPException(405)
-                item = crudclass.get(session=self.request.state.db,
+                item = crudclass.get(session=session,
                                          id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.get("/")
             def index(self,
                       params: dict = Depends(crudclass.query_params),
-                      user: UserWithRoles = Depends(index_callable)
+                      user: UserWithRoles = Depends(index_callable),
+                      session: Session = Depends(get_db)
                       ) -> List[get_schema]:
                 if 'index' not in self.available_routes:
                     raise HTTPException(405)
-                items = crudclass.index(session=self.request.state.db,
+                items = crudclass.index(session=session,
                                         params=params
                                         )
                 try:
@@ -96,21 +100,22 @@ class BaseBuildView:
                 except TypeError:
                     schema = []
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.post("/",status_code=201)
             def post(self,
                      item: post_schema,
-                user: UserWithRoles = Depends(post_callable),
+                     user: UserWithRoles = Depends(post_callable),
+                     session: Session = Depends(get_db)
             )->get_schema:
                 if 'post' not in self.available_routes:
                     raise HTTPException(405)
-                item = crudclass.post(session=self.request.state.db,
+                item = crudclass.post(session=session,
                                       data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
 
@@ -118,21 +123,25 @@ class BaseBuildView:
             def patch(self,
                       id: int,
                       item: patch_schema,
-                      user: UserWithRoles = Depends(patch_callable))->get_schema:
+                      user: UserWithRoles = Depends(patch_callable),
+                      session: Session = Depends(get_db)
+                      )->get_schema:
                 if 'patch' not in self.available_routes:
                     raise HTTPException(405)
-                item = crudclass.update(session=self.request.state.db,
+                item = crudclass.update(session=session,
                                         id = id,
                                         data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.put("/",status_code=202)
             def put(self,
                     item: put_schema,
-                    user: UserWithRoles = Depends(put_callable))->get_schema:
+                    user: UserWithRoles = Depends(put_callable),
+                    session: Session = Depends(get_db)
+                    )->get_schema:
                 if 'put' not in self.available_routes:
                     raise HTTPException(405)
                 try:
@@ -140,59 +149,62 @@ class BaseBuildView:
                     if not id:
                         raise ValueError('No ID')
                     del item.id
-                    item = crudclass.update(session=self.request.state.db,
+                    item = crudclass.update(session=session,
                                             id = id,
                                             data=item
                                             )
                 except:
-                    item = crudclass.post(session=self.request.state.db,
+                    item = crudclass.post(session=session,
                                           data=item)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.delete("/{id}",status_code=202)
             def delete(self,
                        id: int,
-                       user: UserWithRoles = Depends(delete_callable)
+                       user: UserWithRoles = Depends(delete_callable),
+                       session: Session = Depends(get_db)
                        )->get_schema:
                 if 'delete' not in self.available_routes:
                     raise HTTPException(405)
-                item = crudclass.delete(session=self.request.state.db,
+                item = crudclass.delete(session=session,
                                             id = id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.delete("/undo/{id}",status_code=202)
             def undelete(self,
                          id: int,
-                         user: UserWithRoles = Depends(undelete_callable)
+                         user: UserWithRoles = Depends(undelete_callable),
+                         session: Session = Depends(get_db)
                          )->get_schema:
                 if 'undelete' not in self.available_routes:
                     raise HTTPException(405)
-                item = crudclass.undelete(session=self.request.state.db,
+                item = crudclass.undelete(session=session,
                                           id=id)
                 schema = get_schema.from_orm(item)
                 self.request.state.schema = schema
-                self.request.state.db.close()
+                session.close()
                 return schema
 
             @router.head("/")
             def head(self,
                      response: Response,
                      params:dict = Depends(crudclass.query_params),
-                     user: UserWithRoles = Depends(head_callable)
+                     user: UserWithRoles = Depends(head_callable),
+                     session: Session = Depends(get_db)
                      ):
                 if 'head' not in self.available_routes:
                     raise HTTPException(405)
-                response.headers['Query-Length']=str(crudclass.head(session=self.request.state.db,
+                response.headers['Query-Length']=str(crudclass.head(session=session,
                                                                     params=params
                                                                     )
                                                      )
-                self.request.state.db.close()
+                session.close()
                 return {}
         # if we need to add additional routes beyond the core crud api
         # then we need to add the router for the core crud api to those endpoints router

@@ -1,5 +1,5 @@
 from .base import BaseBuildView
-from fastapi import Request, Response
+from fastapi import Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud
 from app.oauth.callable import AuthRoleOrSelfCheck
@@ -8,6 +8,9 @@ from fastapi import APIRouter
 from fastapi import exceptions
 from app.config import config
 from app.oauth.roles import RoleEnum
+from sqlalchemy.orm import Session
+from app.db import get_db
+
 
 additional_router = APIRouter()
 if config.COGNITO_REGION:
@@ -19,10 +22,11 @@ if config.COGNITO_REGION:
     @additional_router.get("/login-callback",response_class=RedirectResponse)
     def aws_cognito_get_token(code:str,
                     request: Request,
-                    response: Response):
+                    response: Response,
+                    session: Session = Depends(get_db)):
         try:
-            AuthCrud.auth_callback(code=code, session=request.state.db, response=response)
-            request.state.db.close()
+            AuthCrud.auth_callback(code=code, session=session, response=response)
+            session.close()
         except Exception as e:
             request.state.db.close()
             raise exceptions.HTTPException(401,"Not Authorized")

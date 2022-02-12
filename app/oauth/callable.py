@@ -5,6 +5,8 @@ from app.models.base import BaseModel
 from app.oauth.roles import RoleEnum
 from app.crud.auth import AuthCrud
 from app.config import config
+from fastapi import Depends
+from app.db import get_db
 from typing import List
 from fastapi.exceptions import HTTPException
 
@@ -16,9 +18,9 @@ class AuthCallable:
         self.required = required
 
 
-    def __call__(self, request: Request):
+    def __call__(self, request: Request,session: Session = Depends(get_db)):
         try:
-            user = self.validate_code(request.state.db, request.cookies['AUTH-TOKEN'])
+            user = self.validate_code(session, request.cookies['AUTH-TOKEN'])
             self.additional_validation(user,request)
         except Exception as e:
             if self.required:
@@ -45,6 +47,7 @@ class AuthCallable:
                       code: str):
         validated_user = AuthCrud.validate_code(session=session,
                                                     code=code)
+        session.close()
         return validated_user
 
 
@@ -66,8 +69,8 @@ class AuthRoleCheck(AuthCallable):
 
 def AuthRoleOrSelfCheck(self, role: List[str], required: bool = False, model: BaseModel = None):
     auth_check = AuthRoleCheck(role=role, required=required, override=True)
-    async def self_check(request: Request):
-        user, role_check = auth_check(request=request)
+    async def self_check(request: Request, session: Session = Depends(get_db)):
+        user, role_check = auth_check(request=request, session=session)
         if role_check:
             return user
         try:
