@@ -1,4 +1,4 @@
-from .base import BaseBuildView
+from app.views.base import BaseBuildView
 from fastapi import Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud

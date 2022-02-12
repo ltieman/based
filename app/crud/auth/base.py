@@ -1,19 +1,15 @@
-from app.crud.base import BaseCrud
-from app.models.base import BaseModel
 from app.crud.auth.user import UserCrud
 from app.crud.auth.role import RoleCrud
 from app.oauth.roles import RoleEnum
 from app.crud.auth.code_token import CodeTokenCrud, CodeTokenSchema
 from app.schemas.user import UserWithRoles
 from datetime import datetime
-from fastapi.requests import Request
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from app.config import config
 from app.schemas.user import UserCreatePostSchema
-from app.schemas.roles import RolesPostSchema
-from app.models import User, Code_Token
+from app.schemas.auth.roles import RolesPostSchema
 import requests
 
 class AuthCrudBase(UserCrud):

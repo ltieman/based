@@ -1,8 +1,7 @@
 from app.crud.base import BaseCrud
 from app.models import Code_Token
 from sqlalchemy.orm import Session, Query
-from app.schemas.base import BaseModel
-from app.schemas.code_token import CodeTokenSchema
+from app.schemas.auth.code_token import CodeTokenSchema
 from pydantic import BaseModel
 from app.config import config
 from cryptography.fernet import Fernet

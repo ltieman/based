@@ -1,4 +1,4 @@
-from .base import GetSchema, PostSchema, PatchSchema
+from app.schemas.base import GetSchema, PostSchema, PatchSchema
 
 class GroupPostSchema(PostSchema):
     class Config:

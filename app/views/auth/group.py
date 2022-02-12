@@ -1,5 +1,5 @@
 from app.crud.auth.group import GroupCrud
-from .base import BaseBuildView
+from app.views.base import BaseBuildView
 from app.oauth.callable import AuthRoleOrSelfCheck
 from app.oauth.roles import RoleEnum
 from app.schemas.group import GroupPostSchema, GroupGetSchema

@@ -6,10 +6,7 @@ from fastapi.responses import Response
 from sqlalchemy.orm import Session, Query
 import requests
 from .code_token import CodeTokenCrud
-from app.schemas.code_token import CodeTokenSchema
-from typing import List, Union
-from app.schemas.user import UserGetSchema, UserCreatePostSchema,\
-    UserLoginPostSchema, UserPatchSchema
+
 
 class BaseUserCrud(BaseCrud):
     model = User

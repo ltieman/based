@@ -1,4 +1,4 @@
-from .base import GetSchema, PostSchema, PatchSchema
+from app.schemas.base import GetSchema, PostSchema, PatchSchema
 from pydantic import Field
 from typing import List
 from app.oauth.roles import RoleEnum

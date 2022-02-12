@@ -2,9 +2,9 @@ from app.crud.base import BaseCrud
 from app.models import Group
 from sqlalchemy.orm import Session
 from app.oauth.roles import RoleEnum
-from app.schemas.group import GroupGetSchema, GroupPostSchema
+from app.schemas.group import GroupPostSchema
 from app.schemas.user import UserWithRoles
-from app.schemas.roles import RolesPostSchema
+from app.schemas.auth.roles import RolesPostSchema
 from app.models.base import BaseModel as SQLBaseModel
 from .role import RoleCrud
 

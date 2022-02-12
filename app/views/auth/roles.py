@@ -1,8 +1,8 @@
-from app.models.roles import Role
-from .base import BaseBuildView
+from app.models.auth.roles import Role
+from app.views.base import BaseBuildView
 from app.oauth.callable import AuthRoleOrSelfCheck
 from app.oauth.roles import RoleEnum
-from app.schemas.roles import RolesPostSchema, RolesGetSchema
+from app.schemas.auth.roles import RolesPostSchema, RolesGetSchema
 
 class RoleView(BaseBuildView):
     model = Role
