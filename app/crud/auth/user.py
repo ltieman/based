@@ -1,6 +1,7 @@
 from app.crud.base import BaseCrud
 from app.models import User
 from app.config import config
+from datetime import datetime
 from fastapi.responses import Response
 from sqlalchemy.orm import Session, Query
 import requests
@@ -12,6 +13,7 @@ from app.schemas.user import UserGetSchema, UserCreatePostSchema,\
 
 class BaseUserCrud(BaseCrud):
     model = User
+
 if config.COGNITO_REGION and config.COGNITO_CLIENTID and config.COGNITO_USERPOOLID:
     class CognitoUserCrud(BaseUserCrud):
         pass

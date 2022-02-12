@@ -14,8 +14,9 @@ class AuthCallable:
     required: bool = False
     override: bool = False
 
-    def __init__(self, required: bool = False):
+    def __init__(self, required: bool = False, model: BaseModel = None):
         self.required = required
+        self.model = model
 
 
     def __call__(self, request: Request,session: Session = Depends(get_db)):
@@ -32,7 +33,10 @@ class AuthCallable:
                 return self.auth_logic(user), True
             except:
                 return user, False
-        return self.auth_logic(user)
+        try:
+            return self.auth_logic(user)
+        except:
+            raise HTTPException(401, "Not Authorized")
 
     def auth_logic(self, user: dict):
         #this is mostly here for overwriting and allowing us to do logic on user
@@ -41,8 +45,7 @@ class AuthCallable:
     def additional_validation(self, user: UserWithRoles, request: Request):
         pass
 
-    @classmethod
-    def validate_code(cls,
+    def validate_code(self,
                       session: Session,
                       code: str):
         validated_user = AuthCrud.validate_code(session=session,
@@ -52,16 +55,21 @@ class AuthCallable:
 
 
 class AuthRoleCheck(AuthCallable):
-    def __init__(self, role: List[str], required: bool = False, model: BaseModel = None, override=False):
+    def __init__(self, role: RoleEnum, required: bool = False, model: BaseModel = None, override=False):
         self.required = required
-        self.role = [r.name for r in role]
+        self.role = role
         self.override = override
+        self.model = model
 
-    def auth_logic(self, user: dict):
+    def auth_logic(self, user: UserWithRoles):
         if RoleEnum.ADMIN.name in user.roles:
             return user
+        if hasattr(self.model, 'group_id') or self.model.__name__.lower() == 'group':
+            user.authorized_groups = [group_role.group_id for group_role in user.group_roles if RoleEnum[group_role].value >= self.role.value]
+            if user.authorized_groups:
+                return user
         if self.role:
-            roles = set(user.roles).intersection(self.role)
+            roles = [role for role in user.roles if RoleEnum[role].value >= self.role.value]
             if not roles:
                 raise HTTPException(401, "Not Authorized")
         return user
@@ -78,12 +86,18 @@ def AuthRoleOrSelfCheck(self, role: List[str], required: bool = False, model: Ba
                 if request.query_params.get('user_id', None):
                     assert request.query_params['user_id'] == user.id
                     return user
+                if request.path_params.get('user_id', None):
+                    assert request.path_params.get('user_id') == user.id
+                    return user
                 data = await request.json()
                 if data.get('user_id') == user.id:
                     return user
             elif model.__name__.lower() == 'user':
                 if request.query_params.get('id', None):
                     assert request.query_params['id'] == user.id
+                    return user
+                if request.path_params.get('id', None):
+                    assert request.path_params.get('id') == user.id
                     return user
                 data = await request.json()
                 if data.get('id') == user.id:

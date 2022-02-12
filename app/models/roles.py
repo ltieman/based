@@ -7,4 +7,5 @@ class Role(BaseModel):
     __tablename__ = "role"
     role = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
+    group_id = Column(Integer, ForeignKey('group.id'), nullable=True, default=None)
     #user = relationship("user",backref='children')

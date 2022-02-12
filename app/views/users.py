@@ -28,7 +28,7 @@ if config.COGNITO_REGION:
             AuthCrud.auth_callback(code=code, session=session, response=response)
             session.close()
         except Exception as e:
-            request.state.db.close()
+            session.close()
             raise exceptions.HTTPException(401,"Not Authorized")
         return f"{config.CLEAN_URL}/users/"
 
@@ -40,10 +40,10 @@ class UserView(BaseBuildView):
     additional_routes = additional_router
     require_auth = True
     auth_callable = AuthRoleOrSelfCheck
-    role_delete = [RoleEnum.ADMIN]
-    role_undelete = [RoleEnum.ADMIN]
-    role_get = [RoleEnum.LOGIN]
-    role_index = [RoleEnum.LOGIN]
+    role_delete = RoleEnum.ADMIN
+    role_undelete = RoleEnum.ADMIN
+    role_get = RoleEnum.ADMIN
+    role_index = RoleEnum.LOGIN
     available_routes = ['get','index','delete','undelete']
 
 user_view = UserView()

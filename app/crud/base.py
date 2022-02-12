@@ -1,14 +1,53 @@
-from app.models.base import BaseModel
+from app.models.base import BaseModel as SQLBaseModel
 from pydantic import BaseModel
 from datetime import datetime
 from sqlalchemy.orm import Session, Query
-from typing import List, Union, Any
-from sqlalchemy import update
+from fastapi.exceptions import HTTPException
+from typing import List, Union
+from app.oauth.roles import RoleEnum
+from sqlalchemy import update, or_, and_
 from app.schemas.base import ArchiveUpdate, HeadSchema
+from app.schemas.user import UserWithRoles
 from dateutil.parser import parse
 
 class BaseCrud:
-    model: BaseModel
+    model: SQLBaseModel
+
+    @classmethod
+    def apply_query_security(cls, query: Query, user: UserWithRoles=None):
+        if RoleEnum.ADMIN.name in user.roles:
+            return query
+        if user and hasattr(cls.model, 'group_id'):
+            query = query.filter(cls.model.group_id.in_(user.authorized_groups))
+        if user and cls.model.__name__.lower() == 'group':
+            query = query.filter(cls.model.id.in_(user.authorized_groups))
+        return query
+
+    @classmethod
+    def apply_patch_security(cls, data:BaseModel, id: int, user: UserWithRoles = None):
+        if not user:
+            pass
+        elif RoleEnum.ADMIN.name in user.roles:
+            pass
+        elif user and hasattr(data, 'group_id'):
+            try:
+                assert data.group_id in user.authorized_groups
+            except:
+                raise HTTPException("401", "Not Authorized")
+        elif hasattr(data.config,"is_group_schema"):
+            try:
+                assert id in user.authorized_groups
+            except:
+                raise HTTPException("401", "Not Authorized")
+
+    @classmethod
+    def apply_post_security(cls, data: BaseModel, user: UserWithRoles=None):
+        if user and (hasattr(data,'group_id') or hasattr(cls.model, 'group_id')):
+            try:
+                assert data.group_id in user.authorized_groups
+            except:
+                raise HTTPException("401","Not Authorized")
+
 
     @classmethod
     def index_params(cls,
@@ -18,7 +57,6 @@ class BaseCrud:
             #if show archived is set to false, return only rows where archived is none
             if not params['show_archived']:
                 query = query.filter(cls.model.archived == None)
-            #del params['show_archived']
         except:
             pass
         try:
@@ -37,19 +75,24 @@ class BaseCrud:
     def get(cls,
             session: Session,
             id: int,
-            query: Query=None)->BaseModel:
+            query: Query=None,
+            user: UserWithRoles = None
+            )->SQLBaseModel:
         #simple get by id
         if query:
-            item = query.filter(cls.model.id == id).first()
+            query = query.filter(cls.model.id == id)
         else:
-            item = session.query(cls.model).filter(cls.model.id == id).first()
+            query = session.query(cls.model).filter(cls.model.id == id)
+        query = cls.apply_query_security(query,user)
+        item = query.first()
         return item
 
     @classmethod
     def index(cls, session: Session,
               params: dict= None,
               for_head: bool = False,
-              query: Query= None)->Union[List[BaseModel], Query]:
+              query: Query= None,
+              user: UserWithRoles = None)->Union[List[SQLBaseModel], Query]:
         if not params:
             params = {}
         #allow for passing in query through super()
@@ -59,7 +102,7 @@ class BaseCrud:
         #if we dont want to do this here, don't pass it in from super()
         query = cls.index_params(params=params,
                                  query=query)
-
+        query = cls.apply_query_security(query,user)
         #returns the query without executing it for the head method
         if for_head:
             return query
@@ -69,8 +112,10 @@ class BaseCrud:
     @classmethod
     def post(cls,
              session: Session,
-             data: BaseModel)->BaseModel:
+             data: BaseModel,
+             user: UserWithRoles = None)->SQLBaseModel:
         #very straight forward sql alchemy create row
+        cls.apply_post_security(data)
         item = cls.model(**data.dict())
         session.add(item)
         session.commit()
@@ -82,41 +127,49 @@ class BaseCrud:
                session,
                id: int,
                data: BaseModel,
-               query: Query = None)->BaseModel:
+               query: Query = None,
+               user: UserWithRoles = None)->SQLBaseModel:
+        cls.apply_patch_security(data=data,user=user, id=id)
         up_query = update(cls.model).where(cls.model.id == id).values(**data.dict(exclude_unset=True))
+        up_query = cls.apply_query_security(up_query,user)
         session.execute(up_query)
         session.commit()
-        return cls.get(session,id, query=query)
+        return cls.get(session,id, query=query,user=user)
 
     @classmethod
     def delete(cls,
                session: Session,
-               id: int)->BaseModel:
+               id: int,
+               user: UserWithRoles = None)->SQLBaseModel:
         #uses the update method to modify the archived field
-        return cls.update(session=session,id=id, data=ArchiveUpdate(archived = datetime.utcnow()))
+        return cls.update(session=session,id=id, data=ArchiveUpdate(archived = datetime.utcnow()),user=user)
 
     @classmethod
     def undelete(cls,
                session: Session,
-               id: int) -> BaseModel:
+               id: int,
+                user: UserWithRoles = None) -> SQLBaseModel:
         #uses the update field to nullify the archived field
-        return cls.update(session=session, id=id, data=ArchiveUpdate(archived=None))
+        return cls.update(session=session, id=id, data=ArchiveUpdate(archived=None), user=user)
 
     @classmethod
     def head(cls,
              session: Session,
              params: BaseModel,
-             query: Query=None)->HeadSchema:
+             query: Query=None,
+             user: UserWithRoles = None)->HeadSchema:
         #get back the exact query that we would get from the index method
         if query:
             query = cls.index(session=session,
                               params=params,
                               for_head=True,
-                              query=query)
+                              query=query,
+                              user=user)
         else:
             query = cls.index(session=session,
                               params=params,
-                              for_head=True)
+                              for_head=True,
+                              user=user)
         #get the count of the rows on the dataset
         return query.count()
         #give it back along with the params we were given

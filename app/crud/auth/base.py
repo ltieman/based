@@ -1,9 +1,11 @@
 from app.crud.base import BaseCrud
+from app.models.base import BaseModel
 from app.crud.auth.user import UserCrud
 from app.crud.auth.role import RoleCrud
 from app.oauth.roles import RoleEnum
 from app.crud.auth.code_token import CodeTokenCrud, CodeTokenSchema
 from app.schemas.user import UserWithRoles
+from datetime import datetime
 from fastapi.requests import Request
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
@@ -17,6 +19,19 @@ import requests
 class AuthCrudBase(UserCrud):
     code_token_crud: CodeTokenCrud = CodeTokenCrud
     role_crud: RoleCrud = RoleCrud
+
+    @classmethod
+    def query_params(cls,
+                     limit: int = 20,
+                     offset: int = 0,
+                     show_archived: bool = False,
+                     updated_since: datetime = None,
+                     email: str = None,
+                     first_name: str = None,
+                     last_name: str = None,
+                     username: str = None
+                     ):
+        return cls.__query_params__(**locals())
 
     @classmethod
     def auth_callback(cls, *args, **kwargs):
@@ -100,10 +115,14 @@ if config.COGNITO_REGION:
             roles = cls.role_crud.index(session=session,
                                         params={"user_id":item.user_id})
             roles = list({
-                role.role for role in roles
+                role.role for role in roles if role.group_id is None
+            })
+            group_roles = list({
+                role for role in roles if role.group_id is not None
             })
             user_to_return = UserWithRoles.from_orm(user_from_db)
             user_to_return.roles = roles
+            user_to_return.group_roles = group_roles
             return user_to_return
 
     class AuthCrud(AWSAuthCrudBase):

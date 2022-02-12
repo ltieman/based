@@ -7,6 +7,7 @@ from typing import List
 class RolesPostSchema(PostSchema):
     role: str
     user_id: int
+    group_id: int = None
 
 
 class RolesGetSchema(GetSchema, RolesPostSchema):
