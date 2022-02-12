@@ -35,7 +35,7 @@ class AnonymousUser(BaseModel):
     authorized_groups: List[int] = []
     group_roles: List[RolesGetSchema] = []
 
-    def __nonzero__(self):
+    def __bool__(self):
         ##this will override group security for endpoints marked for open use
         return False
 
