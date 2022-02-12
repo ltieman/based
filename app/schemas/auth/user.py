@@ -1,4 +1,4 @@
-from app.schemas.base import GetSchema, PostSchema, PatchSchema
+from app.schemas.base import GetSchema, PostSchema
 from pydantic import Field, BaseModel
 from typing import List
 from app.oauth.roles import RoleEnum
@@ -28,7 +28,6 @@ class UserWithRoles(UserGetSchema):
     roles : List[str] = []
     group_roles: List[RolesGetSchema] =[]
     authorized_groups: List[int] = []
-
 
 class AnonymousUser(BaseModel):
     roles: List[str] = [RoleEnum.OPEN.name]

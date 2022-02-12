@@ -16,7 +16,7 @@ function debounce(callback, wait) {
             callback.apply(this, args);
         }, wait);
     };
-};
+}
 
 function checkVisible(element) {
     const rect = element.getBoundingClientRect();
