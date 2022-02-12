@@ -37,7 +37,7 @@ class BaseCrud:
     def get(cls,
             session: Session,
             id: int,
-            query: Query)->BaseModel:
+            query: Query=None)->BaseModel:
         #simple get by id
         if query:
             item = query.filter(cls.model.id == id).first()
@@ -106,7 +106,7 @@ class BaseCrud:
     def head(cls,
              session: Session,
              params: BaseModel,
-             query: Query)->HeadSchema:
+             query: Query=None)->HeadSchema:
         #get back the exact query that we would get from the index method
         if query:
             query = cls.index(session=session,

@@ -1,6 +1,7 @@
 from fastapi import Depends, Request, APIRouter, Response, Cookie
 from fastapi.exceptions import HTTPException
 from fastapi_utils.cbv import cbv
+from enum import Enum
 from app.oauth.callable import AuthRoleCheck
 from app.schemas.base import PostSchema, PatchSchema, GetSchema
 from app.schemas.user import UserWithRoles
@@ -15,17 +16,18 @@ class BaseBuildView:
     patch_schema: PatchSchema
     put_schema: PatchSchema
     available_routes: List[str] = ['get','index','post','patch','put','delete','head','undelete']
-    additional_routes: Union[InferringRouter,APIRouter]
+    additional_routes: Union[InferringRouter,APIRouter] = []
+    auth_callable: AuthRoleCheck = AuthRoleCheck
     require_auth: bool = False
-    required_role: List[str] = []
-    role_get: List[str] = []
-    role_index: List[str] = []
-    role_post: List[str] = []
-    role_patch:  List[str] = []
-    role_put: List[str] = []
-    role_delete: List[str] = []
-    role_head: List[str] = []
-    role_undelete: List[str] = []
+    required_role: List[Enum] = []
+    role_get: List[Enum] = []
+    role_index: List[Enum] = []
+    role_post: List[Enum] = []
+    role_patch:  List[Enum] = []
+    role_put: List[Enum] = []
+    role_delete: List[Enum] = []
+    role_head: List[Enum] = []
+    role_undelete: List[Enum] = []
     crud_class: BaseCrud = None
     model: BaseModel = None
 
@@ -39,14 +41,14 @@ class BaseBuildView:
         router = InferringRouter()
         get_schema = self.get_schema
         post_schema = self.post_schema
-        get_callable = AuthRoleCheck(role=self.required_role+self.role_get, required=self.require_auth)
-        index_callable = AuthRoleCheck(role=self.required_role+self.role_index, required=self.require_auth)
-        post_callable = AuthRoleCheck(role=self.required_role+self.role_post, required=self.require_auth)
-        patch_callable = AuthRoleCheck(role=self.required_role+self.role_patch, required=self.require_auth)
-        put_callable = AuthRoleCheck(role=self.required_role+self.role_patch, required=self.require_auth)
-        delete_callable = AuthRoleCheck(role=self.required_role+self.role_delete, required=self.require_auth)
-        head_callable = AuthRoleCheck(role=self.required_role+self.role_head, required=self.require_auth)
-        undelete_callable = AuthRoleCheck(role=self.required_role+self.role_undelete, required=self.require_auth)
+        get_callable = self.auth_callable(role=self.required_role+self.role_get, required=self.require_auth)
+        index_callable = self.auth_callable(role=self.required_role+self.role_index, required=self.require_auth)
+        post_callable = self.auth_callable(role=self.required_role+self.role_post, required=self.require_auth)
+        patch_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth)
+        put_callable = self.auth_callable(role=self.required_role+self.role_patch, required=self.require_auth)
+        delete_callable = self.auth_callable(role=self.required_role+self.role_delete, required=self.require_auth)
+        head_callable = self.auth_callable(role=self.required_role+self.role_head, required=self.require_auth)
+        undelete_callable = self.auth_callable(role=self.required_role+self.role_undelete, required=self.require_auth)
         try:
             patch_schema = self.patch_schema
         except:

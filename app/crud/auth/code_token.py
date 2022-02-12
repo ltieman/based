@@ -26,8 +26,9 @@ if config.COGNITO_REGION:
                 id: str,
                 query: Query = None) ->CodeTokenSchema:
             try:
-                item, *ignore = super().index(session=session, params={"code":id}, query=query)
-                token = fernet.decrypt(item.token.encode())
+                query = session.query(cls.model).filter(cls.model.code == id)
+                item = query.first()
+                token = fernet.decrypt(item.token)
                 item = CodeTokenSchema(token=token, code=item.code, user_id=item.user_id)
                 return item
             except:

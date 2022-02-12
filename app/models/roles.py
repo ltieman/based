@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from datetime import datetime
 
 class Role(BaseModel):
-    __tablename__ = "code_token"
+    __tablename__ = "role"
     role = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey('user.id'))
     #user = relationship("user",backref='children')

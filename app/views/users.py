@@ -1,11 +1,12 @@
 from .base import BaseBuildView
 from fastapi import Request, Response
 from fastapi.responses import RedirectResponse
-from app.crud.auth import UserCrud
+from app.crud.auth import AuthCrud
 from app.schemas.user import UserGetSchema, UserPatchSchema, UserCreatePostSchema
 from fastapi import APIRouter
 from fastapi import exceptions
 from app.config import config
+from app.oauth.roles import RoleEnum
 
 additional_router = APIRouter()
 if config.COGNITO_REGION:
@@ -19,19 +20,25 @@ if config.COGNITO_REGION:
                     request: Request,
                     response: Response):
         try:
-            UserCrud.auth_callback(code=code, session=request.state.db)
+            AuthCrud.auth_callback(code=code, session=request.state.db, response=response)
             request.state.db.close()
-        except:
+        except Exception as e:
             request.state.db.close()
             raise exceptions.HTTPException(405,"Not Authorized")
-        return f"https://{config.CLEAN_URL}/home"
+        return f"{config.CLEAN_URL}/users/"
 
 class UserView(BaseBuildView):
-    crud_class = UserCrud
+    crud_class = AuthCrud
     get_schema = UserGetSchema
     post_schema = UserCreatePostSchema
     patch_schema = UserPatchSchema
     additional_routes = additional_router
+    require_auth = True
+    role_delete = [RoleEnum.ADMIN]
+    role_undelete = [RoleEnum.ADMIN]
+    role_get = [RoleEnum.LOGIN]
+    role_index = [RoleEnum.LOGIN]
+    available_routes = ['get','index','delete','undelete']
 
 user_view = UserView()
 

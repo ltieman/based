@@ -1,6 +1,7 @@
 from app.crud.base import BaseCrud
 from app.crud.auth.user import UserCrud
 from app.crud.auth.role import RoleCrud
+from app.oauth.roles import RoleEnum
 from app.crud.auth.code_token import CodeTokenCrud, CodeTokenSchema
 from app.schemas.user import UserWithRoles
 from fastapi.requests import Request
@@ -9,6 +10,7 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from app.config import config
 from app.schemas.user import UserCreatePostSchema
+from app.schemas.roles import RolesPostSchema
 from app.models import User, Code_Token
 import requests
 
@@ -32,7 +34,7 @@ if config.COGNITO_REGION:
         @classmethod
         def get_user_from_aws_for_token(cls, token) -> UserCreatePostSchema:
             user = cognito_client.get_user(AccessToken=token)
-            user_json = {attribute['Name']: attribute['Value'] for attribute in user.UserAttributes}
+            user_json = {attribute['Name']: attribute['Value'] for attribute in user['UserAttributes']}
             user_json.update({"username": user['Username']})
             return UserCreatePostSchema(**user_json)
 
@@ -48,12 +50,13 @@ if config.COGNITO_REGION:
                                         "redirect_uri": f"{config.CLEAN_URL}/users/login-callback"},
                                   auth=(config.COGNITO_CLIENTID, config.COGNITO_CLIENT_SECRET)
                                   )
-            cookie = [cookie for cookie in token.cookies if cookie.name == 'XSRF-TOKEN'][0]
-            response.set_cookie(key=cookie.name, value=cookie.value, path=cookie.path, expires=3600 * 48
+            #cookie = [cookie for cookie in token.cookies if cookie.name == 'XSRF-TOKEN'][0]
+            assert token.status_code == 200
+            response.set_cookie(key='AUTH-TOKEN', value=code, path="/", expires=3600 * 48
 
                                 )
             token_json = token.json()
-            user_schema = cls.get_user_from_aws_for_token(token['access_token'])
+            user_schema = cls.get_user_from_aws_for_token(token_json['access_token'])
 
             try:
                 user, *ignore = cls.index(session=session,
@@ -71,6 +74,8 @@ if config.COGNITO_REGION:
                 user = cls.post(session=session,
                                 data=user_schema
                                 )
+                role_data = RolesPostSchema(user_id=user.id, role=RoleEnum.LOGIN.name)
+                role = RoleCrud.post(session=session, data=role_data)
             code_token = cls.code_token_crud.get(session=session,
                                            id=code
                                            )
