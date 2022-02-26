@@ -51,7 +51,8 @@ class UserView(BaseBuildView):
         Routes.get,
         Routes.index,
         Routes.delete,
-        Routes.undelete]
+        Routes.undelete
+    ]
 
 
 user_view = UserView()
