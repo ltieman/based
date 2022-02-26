@@ -13,16 +13,7 @@ class GroupView(BaseBuildView):
     role_post = RoleEnum.POST
     get_schema = GroupGetSchema
     post_schema = GroupPostSchema
-    available_routes = [
-        "get",
-        "index",
-        "post",
-        "patch",
-        "put",
-        "delete",
-        "head",
-        "undelete",
-    ]
+
 
 
 group_view = GroupView()

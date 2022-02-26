@@ -74,9 +74,11 @@ if config.COGNITO_REGION:
             user_schema = cls.get_user_from_aws_for_token(token_json["access_token"])
 
             try:
-                user, *ignore = cls.index(
-                    session=session, params={"sub": user_schema.sub}
+                query = cls.index(
+                    session=session, params={"sub": user_schema.sub, 'limit':1},
+                    query_pass_back=True
                 )
+                user = query.first()
             except:
                 user = None
             if user:

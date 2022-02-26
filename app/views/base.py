@@ -1,16 +1,16 @@
 from fastapi import Depends, Request, APIRouter, Response
 from fastapi_utils.cbv import cbv
-from enum import Enum
+from app.oauth.roles import RoleEnum
 from app.oauth.callable import AuthRoleCheck
 from sqlalchemy.orm import Session
 from app.schemas.base import PostSchema, PatchSchema, GetSchema
-from app.schemas.user import UserWithRoles
+from app.schemas.auth.user import UserWithRoles
 from app.crud.base import BaseCrud
 from app.models.base import BaseModel
 from typing import List, Union
 from fastapi_utils.inferring_router import InferringRouter
 from app.db import get_db
-
+from .enums import Routes
 
 class BaseBuildView:
     get_schema: GetSchema
@@ -18,28 +18,30 @@ class BaseBuildView:
     patch_schema: PatchSchema
     put_schema: PatchSchema
     index_schema: GetSchema
-    available_routes: List[str] = [
-        "get",
-        "index",
-        "post",
-        "patch",
-        "put",
-        "delete",
-        "head",
-        "undelete",
+    available_routes: List[Routes] = [
+
+        Routes.get,
+        Routes.index,
+        Routes.post,
+        Routes.patch,
+        Routes.put,
+        Routes.delete,
+        Routes.head,
+        Routes.undelete,
+
     ]
     additional_routes: Union[InferringRouter, APIRouter] = []
     auth_callable: AuthRoleCheck = AuthRoleCheck
     require_auth: bool = False
-    required_role: Enum = None
-    role_get: Enum = None
-    role_index: Enum = None
-    role_post: Enum = None
-    role_patch: Enum = None
-    role_put: Enum = None
-    role_delete: Enum = None
-    role_head: Enum = None
-    role_undelete: Enum = None
+    required_role: RoleEnum = RoleEnum.OPEN
+    role_get: RoleEnum = None
+    role_index: RoleEnum = None
+    role_post: RoleEnum = None
+    role_patch: RoleEnum = None
+    role_put: RoleEnum = None
+    role_delete: RoleEnum = None
+    role_head: RoleEnum = None
+    role_undelete: RoleEnum = None
     crud_class: BaseCrud = None
     model: BaseModel = None
 
@@ -118,7 +120,7 @@ class BaseBuildView:
             request: Request
             available_routes = self.available_routes
 
-            if "get" in self.available_routes:
+            if Routes.get in self.available_routes:
 
                 @router.get("/{id}")
                 def get(
@@ -134,7 +136,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "index" in self.available_routes:
+            if Routes.index in self.available_routes:
 
                 @router.get("/")
                 def index(
@@ -152,7 +154,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "post" in self.available_routes:
+            if Routes.post in self.available_routes:
 
                 @router.post("/", status_code=201)
                 def post(
@@ -167,7 +169,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "patch" in self.available_routes:
+            if Routes.patch in self.available_routes:
 
                 @router.patch("/{id}", status_code=202)
                 def patch(
@@ -185,7 +187,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "put" in self.available_routes:
+            if Routes.put in self.available_routes:
 
                 @router.put("/", status_code=202)
                 def put(
@@ -209,7 +211,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "delete" in self.available_routes:
+            if Routes.delete in self.available_routes:
 
                 @router.delete("/{id}", status_code=202)
                 def delete(
@@ -224,7 +226,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "undelete" in self.available_routes:
+            if Routes.undelete in self.available_routes:
 
                 @router.delete("/undo/{id}", status_code=202)
                 def undelete(
@@ -239,7 +241,7 @@ class BaseBuildView:
                     session.close()
                     return schema
 
-            if "head" in self.available_routes:
+            if Routes.head in self.available_routes:
 
                 @router.head("/")
                 def head(

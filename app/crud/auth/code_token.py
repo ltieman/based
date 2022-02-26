@@ -5,7 +5,7 @@ from app.schemas.auth.code_token import CodeTokenSchema
 from pydantic import BaseModel
 from app.config import config
 from cryptography.fernet import Fernet
-from app.schemas.user import UserWithRoles
+from app.schemas.auth.user import UserWithRoles
 
 fernet = Fernet(config.SECRET_KEY.encode())
 

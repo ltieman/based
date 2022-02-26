@@ -10,6 +10,7 @@ from app.config import config
 from app.oauth.roles import RoleEnum
 from sqlalchemy.orm import Session
 from app.db import get_db
+from app.views.enums import Routes
 
 
 additional_router = APIRouter()
@@ -46,7 +47,11 @@ class UserView(BaseBuildView):
     role_undelete = RoleEnum.ADMIN
     role_get = RoleEnum.ADMIN
     role_index = RoleEnum.LOGIN
-    available_routes = ["get", "index", "delete", "undelete"]
+    available_routes = [
+        Routes.get,
+        Routes.index,
+        Routes.delete,
+        Routes.undelete]
 
 
 user_view = UserView()
