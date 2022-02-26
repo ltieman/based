@@ -15,8 +15,10 @@ if config.COGNITO_REGION:
         model = Code_Token
 
         @classmethod
-        def post(
-            cls, session: Session, data: BaseModel, user: UserWithRoles = None
+        def post(cls,
+                 session: Session,
+                 data: BaseModel,
+                 user: UserWithRoles = None
         ) -> BaseModel:
             data.token = fernet.encrypt(data.token.encode())
             super().post(session, data, user=user)

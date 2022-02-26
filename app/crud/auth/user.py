@@ -24,7 +24,6 @@ elif config.AUTH0_DOMAIN and config.AUTH0_CLIENTID and config.AUTH0_CUSTOMAPI:
         pass
 
 else:
-
     class UserCrud(BaseUserCrud):
         def __init__(self):
             raise Exception("Auth Has Not Been Configured")
