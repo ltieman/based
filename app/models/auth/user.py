@@ -9,6 +9,6 @@ class User(BaseModel):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     username = Column(String, nullable=False)
-    email = Column(String, nullable=False)
+    email = Column(String, nullable=False, unique=True)
     email_verified = Column(Boolean, nullable=True)
-    sub = Column(String, nullable=False)
+    sub = Column(String, nullable=False,unique=True)

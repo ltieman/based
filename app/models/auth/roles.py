@@ -1,7 +1,6 @@
 from app.models.base import BaseModel
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
-from datetime import datetime
 
 
 class Role(BaseModel):
@@ -9,4 +8,5 @@ class Role(BaseModel):
     role = Column(String, nullable=False)
     user_id = Column(Integer, ForeignKey("user.id"))
     group_id = Column(Integer, ForeignKey("group.id"), nullable=True, default=None)
+    UniqueConstraint('role','group_id','user_id', name='role_group_unique')
     # user = relationship("user",backref='children')

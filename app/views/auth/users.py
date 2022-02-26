@@ -3,7 +3,7 @@ from fastapi import Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud
 from app.oauth.callable import AuthRoleOrSelfCheck
-from app.schemas.user import UserGetSchema, UserPatchSchema, UserCreatePostSchema
+from app.schemas.auth.user import UserGetSchema, UserCreatePostSchema
 from fastapi import APIRouter
 from fastapi import exceptions
 from app.config import config
@@ -23,7 +23,6 @@ if config.COGNITO_REGION:
     @additional_router.get("/login-callback", response_class=RedirectResponse)
     def aws_cognito_get_token(
         code: str,
-        request: Request,
         response: Response,
         session: Session = Depends(get_db),
     ):
@@ -40,7 +39,6 @@ class UserView(BaseBuildView):
     crud_class = AuthCrud
     get_schema = UserGetSchema
     post_schema = UserCreatePostSchema
-    patch_schema = UserPatchSchema
     additional_routes = additional_router
     require_auth = True
     auth_callable = AuthRoleOrSelfCheck
