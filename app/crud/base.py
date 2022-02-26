@@ -15,7 +15,8 @@ class BaseCrud:
     model: SQLBaseModel
 
     @classmethod
-    def apply_query_security(cls, query: Query, user: UserWithRoles = None):
+    def apply_query_security(cls, query: Query,
+                             user: UserWithRoles = None)->Query:
         if not user:
             return query
         elif RoleEnum.ADMIN.name in user.roles:
@@ -27,7 +28,10 @@ class BaseCrud:
         return query
 
     @classmethod
-    def apply_patch_security(cls, data: BaseModel, id: int, user: UserWithRoles = None):
+    def apply_patch_security(cls,
+                             data: BaseModel,
+                             id: int,
+                             user: UserWithRoles = None):
         if not user:
             pass
         elif RoleEnum.ADMIN.name in user.roles:
@@ -44,7 +48,9 @@ class BaseCrud:
                 raise HTTPException("401", "Not Authorized")
 
     @classmethod
-    def apply_post_security(cls, data: BaseModel, user: UserWithRoles = None):
+    def apply_post_security(cls,
+                            data: BaseModel,
+                            user: UserWithRoles = None):
         if not user:
             pass
         elif user and (hasattr(data, "group_id") or hasattr(cls.model, "group_id")):
@@ -54,7 +60,9 @@ class BaseCrud:
                 raise HTTPException("401", "Not Authorized")
 
     @classmethod
-    def index_params(cls, params: dict, query: Query) -> Query:
+    def index_params(cls,
+                     params: dict,
+                     query: Query) -> Query:
         try:
             # if show archived is set to false, return only rows where archived is none
             if not params["show_archived"]:
@@ -83,15 +91,21 @@ class BaseCrud:
         return query
 
     @classmethod
-    def get(
-        cls, session: Session, id: int, query: Query = None, user: UserWithRoles = None
-    ) -> SQLBaseModel:
+    def get(cls,
+            session: Session,
+            id: int,
+            query: Query = None,
+            user: UserWithRoles = None,
+            query_pass_back: bool = False
+    ) -> Union[SQLBaseModel,Query]:
         # simple get by id
         if query:
             query = query.filter(cls.model.id == id)
         else:
             query = session.query(cls.model).filter(cls.model.id == id)
         query = cls.apply_query_security(query, user)
+        if query_pass_back:
+            return query
         item = query.first()
         return item
 
@@ -100,7 +114,8 @@ class BaseCrud:
         cls,
         session: Session,
         params: dict = None,
-        for_head: bool = False,
+        query_pass_back: bool = False,
+        from_head: bool = False,
         query: Query = None,
         user: UserWithRoles = None,
     ) -> Union[List[SQLBaseModel], Query]:
@@ -114,20 +129,29 @@ class BaseCrud:
         query = cls.index_params(params=params, query=query)
         query = cls.apply_query_security(query, user)
         # returns the query without executing it for the head method
-        if for_head:
+        if from_head:
+            return query
+        query = query.offset(params.get("offset", 0)).limit(params.get("limit", 20))
+        if query_pass_back:
             return query
         # sets the offset and limit from the params and fetches the query
         return (
-            query.offset(params.get("offset", 0)).limit(params.get("limit", 20)).all()
+            query.all()
         )
 
     @classmethod
     def post(
-        cls, session: Session, data: BaseModel, user: UserWithRoles = None
+        cls,
+        session: Session,
+        data: BaseModel,
+        user: UserWithRoles = None,
+        query_pass_back: bool = False
     ) -> SQLBaseModel:
         # very straight forward sql alchemy create row
         cls.apply_post_security(data)
         item = cls.model(**data.dict())
+        if query_pass_back:
+            return item
         session.add(item)
         session.commit()
         session.refresh(item)
@@ -141,7 +165,8 @@ class BaseCrud:
         data: BaseModel,
         query: Query = None,
         user: UserWithRoles = None,
-    ) -> SQLBaseModel:
+        query_pass_back: bool = False
+    ) -> Union[Query,SQLBaseModel]:
         cls.apply_patch_security(data=data, user=user, id=id)
         up_query = (
             update(cls.model)
@@ -149,29 +174,39 @@ class BaseCrud:
             .values(**data.dict(exclude_unset=True))
         )
         up_query = cls.apply_query_security(up_query, user)
+        if query_pass_back:
+            return up_query
         session.execute(up_query)
         session.commit()
         return cls.get(session, id, query=query, user=user)
 
     @classmethod
-    def delete(
-        cls, session: Session, id: int, user: UserWithRoles = None
-    ) -> SQLBaseModel:
+    def delete(cls,
+               session: Session,
+               id: int,
+               user: UserWithRoles = None,
+               query_pass_back: bool = False
+    ) -> Union[Query,SQLBaseModel]:
         # uses the update method to modify the archived field
         return cls.update(
             session=session,
             id=id,
             data=ArchiveUpdate(archived=datetime.utcnow()),
             user=user,
+            query_pass_back=query_pass_back
         )
 
     @classmethod
-    def undelete(
-        cls, session: Session, id: int, user: UserWithRoles = None
-    ) -> SQLBaseModel:
+    def undelete(cls,
+                 session: Session,
+                 id: int,
+                 user: UserWithRoles = None,
+                 query: Query = None,
+                 query_pass_back: bool = False
+    ) -> Union[SQLBaseModel, Query]:
         # uses the update field to nullify the archived field
         return cls.update(
-            session=session, id=id, data=ArchiveUpdate(archived=None), user=user
+            session=session, id=id, data=ArchiveUpdate(archived=None), user=user,query=query, query_pass_back=query_pass_back
         )
 
     @classmethod
@@ -181,14 +216,15 @@ class BaseCrud:
         params: BaseModel,
         query: Query = None,
         user: UserWithRoles = None,
-    ) -> HeadSchema:
+        query_pass_back: bool = False
+    ) -> Union[Query,HeadSchema]:
         # get back the exact query that we would get from the index method
-        if query:
-            query = cls.index(
-                session=session, params=params, for_head=True, query=query, user=user
-            )
-        else:
-            query = cls.index(session=session, params=params, for_head=True, user=user)
+
+        query = cls.index(
+            session=session, params=params, from_head = True, query=query, user=user
+        )
+        if query_pass_back:
+            return query
         # get the count of the rows on the dataset
         return query.count()
         # give it back along with the params we were given

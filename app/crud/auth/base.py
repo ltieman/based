@@ -2,13 +2,13 @@ from app.crud.auth.user import UserCrud
 from app.crud.auth.role import RoleCrud
 from app.oauth.roles import RoleEnum
 from app.crud.auth.code_token import CodeTokenCrud, CodeTokenSchema
-from app.schemas.user import UserWithRoles
+from app.schemas.auth.user import UserWithRoles
 from datetime import datetime
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 from app.config import config
-from app.schemas.user import UserCreatePostSchema
+from app.schemas.auth.user import UserCreatePostSchema
 from app.schemas.auth.roles import RolesPostSchema
 import requests
 
@@ -66,7 +66,6 @@ if config.COGNITO_REGION:
                 },
                 auth=(config.COGNITO_CLIENTID, config.COGNITO_CLIENT_SECRET),
             )
-            # cookie = [cookie for cookie in token.cookies if cookie.name == 'XSRF-TOKEN'][0]
             assert token.status_code == 200
             response.set_cookie(
                 key="AUTH-TOKEN", value=code, path="/", expires=3600 * 48
