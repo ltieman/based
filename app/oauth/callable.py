@@ -47,7 +47,7 @@ class AuthCallable:
         return user
 
     def additional_validation(self, user: UserWithRoles, request: Request):
-        pass
+       ...
 
     def validate_code(self, session: Session, code: str):
         try:
@@ -57,9 +57,9 @@ class AuthCallable:
                 for group_role in validated_user.group_roles
                 if RoleEnum[group_role].value >= self.role.value
             ]
-        except:
+        except Exception as e:
             session.close()
-            raise
+            raise e
         return validated_user
 
 
@@ -128,7 +128,7 @@ def AuthRoleOrSelfCheck(
                 if data.get("id") == user.id:
                     return user
         except:
-            pass
+           ...
         raise HTTPException(401, "Not Authorized")
 
     return self_check

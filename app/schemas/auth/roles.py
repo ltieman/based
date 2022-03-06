@@ -10,4 +10,4 @@ class RolesPostSchema(PostSchema):
 
 
 class RolesGetSchema(GetSchema, RolesPostSchema):
-    pass
+   ...

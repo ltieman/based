@@ -1,8 +1,10 @@
 from app.crud.auth.user import UserCrud
 from app.crud.auth.role import RoleCrud
 from app.oauth.roles import RoleEnum
-from app.crud.auth.code_token import CodeTokenCrud, CodeTokenSchema
-from app.schemas.auth.user import UserWithRoles
+from app.models.auth.user import User
+from app.crud.auth.code_token import CodeTokenCrud
+from app.schemas.auth.code_token import CodeTokenSchema
+from app.schemas.auth.user import UserWithRoles, UserUpdateSchema
 from datetime import datetime
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
@@ -10,7 +12,11 @@ from sqlalchemy.orm import Session
 from app.config import config
 from app.schemas.auth.user import UserCreatePostSchema
 from app.schemas.auth.roles import RolesPostSchema
+from pydantic import BaseModel
+from sqlalchemy.orm import Query
+from app.models.base import BaseModel as SQLBaseModel
 import requests
+from typing import Union, List, Dict, Any
 
 
 class AuthCrudBase(UserCrud):
@@ -53,10 +59,10 @@ class AuthCrudBase(UserCrud):
                 query_pass_back=True
             )
             user = query.first()
-        except:
+        except Exception as e:
             user = None
         if user:
-            user = cls.update(session=session,
+            user = super.update(session=session,
                               id=user.id,
                               data=user_schema
                               )
@@ -94,11 +100,11 @@ class AuthCrudBase(UserCrud):
 
     @classmethod
     def get_user_for_token(cls, token:str)->UserWithRoles:
-        raise HTTPException(403,"Not Authorized")
+        raise HTTPException(401,"Not Authorized")
 
     @classmethod
     def get_token_from_code(cls,code:str)->requests.Response:
-        raise HTTPException(403,'Not Authorized')
+        raise HTTPException(401,'Not Authorized')
 
     @classmethod
     def validate_code(cls, session: Session, code: str):
@@ -106,6 +112,7 @@ class AuthCrudBase(UserCrud):
         offset = 0
         item = cls.code_token_crud.get(session=session, id=code)
         user_from_token = cls.get_user_for_token(item.token)
+        user_from_token = cls.user_format(user_from_token)
         user_from_db = cls.get(session=session, id=item.user_id)
         try:
             assert user_from_token.sub == user_from_db.sub
@@ -128,35 +135,114 @@ class AuthCrudBase(UserCrud):
         user_to_return.group_roles = group_roles
         return user_to_return
 
+    @classmethod
+    def update_remote_user(cls,
+                           patch_user: User,
+                           user_attributes: list
+                               ):
+        raise HTTPException(401, "Not Authorized")
+
+    @classmethod
+    def create_update_user_attributes(cls,
+                                      data: UserUpdateSchema)->List[Dict[str,str]]:
+        raise HTTPException(401, "Not Authorized")
+
+    @classmethod
+    def update(
+        cls,
+        session,
+        id: int,
+        data: UserUpdateSchema,
+        query: Query = None,
+        user: UserWithRoles = None,
+        query_pass_back: bool = False
+    ) -> Union[Query,SQLBaseModel]:
+        user_attributes = cls.create_update_user_attributes(data=data)
+        if user_attributes:
+            if id == user.id:
+                patch_user = user
+            else:
+                patch_user = cls.get(session, id)
+            cls.update_remote_user(
+                patch_user=patch_user,
+                user_attributes=user_attributes
+            )
+            return super.update(session=session,
+                         id=id,
+                         data=data
+                         )
+        else:
+            raise HTTPException(422, "No Data To Update User")
 
 
 if config.COGNITO_REGION:
-    from app.oauth.client import cognito_client
+    from app.oauth.client import auth_client
 
     class AWSAuthCrudBase(AuthCrudBase):
         @classmethod
         def get_user_for_token(cls, token) -> dict:
-            return cognito_client.get_user(AccessToken=token)
+            return auth_client.get_user(AccessToken=token)
 
         @classmethod
         def get_token_from_code(cls, code:str)->requests.Response:
-            return requests.post(
-                f"https://{config.COGNITO_DOMAIN}/oauth2/token",
-                data={
+            data = {
                     "grant_type": "authorization_code",
                     "code": code,
                     "client_id": config.COGNITO_CLIENTID,
                     "redirect_uri": f"{config.CLEAN_URL}/users/login-callback",
-                },
+                }
+            return requests.post(
+                f"https://{config.COGNITO_DOMAIN}/oauth2/token",
+                data=data,
                 auth=(config.COGNITO_CLIENTID, config.COGNITO_CLIENT_SECRET),
             )
+
+        @classmethod
+        def create_update_user_attributes(cls,
+                                          data: UserUpdateSchema
+                                          )->List[Dict[str,str]]:
+            user_attributes = []
+            if data.email:
+                user_attributes.append(
+                    {
+                        "Name": "Email",
+                        "Value": data.email
+                    }
+                )
+            if data.first_name:
+                user_attributes.append(
+                    {
+                        "Name": "given_name",
+                        "Value": data.first_name
+                    }
+                )
+            if data.last_name:
+                user_attributes.append(
+                    {
+                        "Name": "family_name",
+                        "Value": data.last_name
+                    }
+                )
+            return user_attributes
+
+        @classmethod
+        def update_remote_user(cls,
+                               patch_user: User,
+                               user_attributes: list
+                               ):
+                auth_client.admin_update_user_attributes(
+                UserPoolId=config.COGNITO_USERPOOLID,
+                Username=patch_user.username,
+                UserAttributes=user_attributes)
+
+
 
 
 
     class AuthCrud(AWSAuthCrudBase):
-        pass
+        ...
 
 else:
 
     class AuthCrud(AuthCrudBase):
-        pass
+        ...

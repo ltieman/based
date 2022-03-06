@@ -1,10 +1,10 @@
 from app.models.auth.roles import Role
-from app.views.base import BaseBuildView
+from app.views.base import BaseBuildView, view_base
 from app.oauth.callable import AuthRoleOrSelfCheck
 from app.oauth.roles import RoleEnum
 from app.schemas.auth.roles import RolesPostSchema, RolesGetSchema
 
-
+@view_base
 class RoleView(BaseBuildView):
     model = Role
     auth_callable = AuthRoleOrSelfCheck
@@ -24,4 +24,3 @@ class RoleView(BaseBuildView):
     ]
 
 
-role_view = RoleView()

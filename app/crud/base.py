@@ -33,9 +33,9 @@ class BaseCrud:
                              id: int,
                              user: UserWithRoles = None):
         if not user:
-            pass
+            ...
         elif RoleEnum.ADMIN.name in user.roles:
-            pass
+            ...
         elif user and hasattr(data, "group_id"):
             try:
                 assert data.group_id in user.authorized_groups
@@ -52,7 +52,7 @@ class BaseCrud:
                             data: BaseModel,
                             user: UserWithRoles = None):
         if not user:
-            pass
+            ...
         elif user and (hasattr(data, "group_id") or hasattr(cls.model, "group_id")):
             try:
                 assert data.group_id in user.authorized_groups
@@ -68,7 +68,7 @@ class BaseCrud:
             if not params["show_archived"]:
                 query = query.filter(cls.model.archived == None)
         except:
-            pass
+            ...
         try:
             if params["updated_since"]:
                 # set query to return only rows created or updated since the date in the params
@@ -78,7 +78,7 @@ class BaseCrud:
                     >= params["updated_since"]
                 )
         except:
-            pass
+            ...
         # for every query param that matches up with a field name, return rows with the value
         for k, v in params.items():
             if hasattr(cls.model, k) and k not in [

@@ -7,6 +7,5 @@ class Routes(Enum):
     patch = 'PATCH'
     put = 'PUT'
     index = 'INDEX'
-    delete = 'DELETE'
     undelete = 'UNDELETE'
     head = 'HEAD'

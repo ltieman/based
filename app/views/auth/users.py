@@ -1,4 +1,4 @@
-from app.views.base import BaseBuildView
+from app.views.base import BaseBuildView, view_base
 from fastapi import Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud
@@ -35,7 +35,7 @@ if config.COGNITO_REGION:
             raise exceptions.HTTPException(401, "Not Authorized")
         return f"{config.CLEAN_URL}/users/"
 
-
+@view_base
 class UserView(BaseBuildView):
     crud_class = AuthCrud
     get_schema = UserGetSchema
@@ -47,12 +47,13 @@ class UserView(BaseBuildView):
     role_undelete = RoleEnum.ADMIN
     role_get = RoleEnum.ADMIN
     role_index = RoleEnum.LOGIN
+    role_patch = RoleEnum.ADMIN
     available_routes = [
         Routes.get,
         Routes.index,
         Routes.delete,
-        Routes.undelete
+        Routes.undelete,
+        Routes.patch
     ]
 
 
-user_view = UserView()

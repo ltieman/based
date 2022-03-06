@@ -10,15 +10,15 @@ fastapi-utils = "*"
 uvicorn = "*"
 gunicorn = "*"
 alembic = "*"
-fastapi-cloudauth = "*"
 boto3 = "*"
+cryptography = "*"
 
 [dev-packages]
 pytest = "*"
 faker = "*"
 livereload = "*"
 coveralls = "*"
-black = {extras = ["d"], version = "*"}
+
 
 [requires]
 python_version = "3.9"

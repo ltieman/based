@@ -18,15 +18,25 @@ class UserCreatePostSchema(PostSchema):
     first_name: str = Field(None, alias="given_name")
     last_name: str = Field(None, alias="family_name")
 
-
-class UserIndexSchema(GetSchema):
-    username: str
+class UserUpdateSchema(PostSchema):
+    email: str = None
     first_name: str = Field(None, alias="given_name")
     last_name: str = Field(None, alias="family_name")
 
 
-class UserGetSchema(GetSchema, UserCreatePostSchema):
-    pass
+class UserIndexSchema(GetSchema):
+    username: str
+    first_name: str
+    last_name: str
+
+
+class UserGetSchema(GetSchema):
+    first_name: str
+    last_name: str
+    username: str
+    sub: str
+    email: str
+    email_verified: bool
 
 
 class UserWithRoles(UserGetSchema):

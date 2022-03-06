@@ -9,4 +9,4 @@ class GroupPostSchema(PostSchema):
 
 
 class GroupGetSchema(GroupPostSchema, GetSchema):
-    pass
+   ...

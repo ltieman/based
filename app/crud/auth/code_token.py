@@ -39,5 +39,5 @@ if config.COGNITO_REGION:
                     token=token, code=item.code, user_id=item.user_id
                 )
                 return item
-            except:
+            except Exception as e:
                 return None

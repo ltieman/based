@@ -4,6 +4,7 @@ from cryptography.fernet import Fernet
 
 class Config(BaseSettings):
     CLEAN_URL: str = "localhost"
+    ##this is for development only, this will cause each agent, on each reboot, to have a different secret key
     SECRET_KEY: str = Fernet.generate_key()
     SQLALCHEMY_DATABASE_URL: str = "sqlite:///./sql_app.db"
     REDIS_URL: str = None

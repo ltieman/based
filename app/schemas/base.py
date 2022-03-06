@@ -8,7 +8,7 @@ class ArchiveUpdate(BaseModel):
 
 
 class PostSchema(BaseModel):
-    pass
+   ...
 
 
 class GetSchema(BaseModel):
@@ -22,7 +22,7 @@ class GetSchema(BaseModel):
 
 
 class PatchSchema(BaseModel):
-    pass
+   ...
 
 
 class HeadSchema(BaseModel):

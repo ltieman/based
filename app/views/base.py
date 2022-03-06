@@ -12,6 +12,7 @@ from fastapi_utils.inferring_router import InferringRouter
 from app.db import get_db
 from .enums import Routes
 
+
 class BaseBuildView:
     get_schema: GetSchema
     post_schema: PostSchema
@@ -266,3 +267,7 @@ class BaseBuildView:
         else:
             self.router = router
         self.view = BaseView
+
+def view_base(obj:BaseBuildView)->BaseBuildView:
+
+    return obj()
