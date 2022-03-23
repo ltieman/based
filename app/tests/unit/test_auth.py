@@ -1,3 +1,32 @@
+from app.crud.auth.base import AuthCrud
+from app.schemas.auth.user import UserLoginPostSchema
+from fastapi.responses import Response
+import pytest
+import secrets
+
+@pytest.fixture
+def login_token(user_login):
+    user_password = UserLoginPostSchema(username = user_login.USER, password = user_login.COGNITO_PASSWORD)
+    #import pudb; pudb.set_trace()
+    return AuthCrud.user_login(user_password=user_password)
+
+@pytest.fixture
+def login_code():
+    return secrets.token_urlsafe(32)
+
+@pytest.fixture
+def login_response():
+    return Response()
+
+@pytest.fixture
+def login_with_code_and_token(session, login_token, login_code, login_response):
+    AuthCrud.auth_callback(code=login_code, token=login_token, response=login_response, session=session)
+
+def test_login(login_with_code_and_token, login_response, login_code, user_login):
+    assert f"AUTH-TOKEN={login_code}" in login_response.headers['set-cookie']
+
+    assert True
+
 def test_add_group():
     ...
 

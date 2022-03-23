@@ -5,7 +5,7 @@ from datetime import datetime
 
 
 class User(BaseModel):
-    __tablename__ = "user"
+    __tablename__ = "username"
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     username = Column(String, nullable=False)

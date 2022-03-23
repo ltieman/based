@@ -3,7 +3,7 @@ from fastapi import Request, Response, Depends
 from fastapi.responses import RedirectResponse
 from app.crud.auth import AuthCrud
 from app.oauth.callable import AuthRoleOrSelfCheck
-from app.schemas.auth.user import UserGetSchema, UserCreatePostSchema
+from app.schemas.auth.user import UserGetSchema, UserCreatePostSchema, UserLoginPostSchema
 from fastapi import APIRouter
 from fastapi import exceptions
 from app.config import config
@@ -11,10 +11,25 @@ from app.oauth.roles import RoleEnum
 from sqlalchemy.orm import Session
 from app.db import get_db
 from app.views.enums import Routes
+import secrets
 
 
 additional_router = APIRouter()
 if config.COGNITO_REGION:
+    @additional_router.post("/login")
+    def aws_cognito_auth_user_password(
+            user_password: UserLoginPostSchema,
+            response: Response,
+            request: Request,
+            session: Session = Depends(get_db)
+    ):
+        try:
+            token = AuthCrud.user_login(user_password=user_password, request=request)
+            code = secrets.token_urlsafe(32)
+            AuthCrud.auth_callback(code=code, session=session, token=token,response=response)
+            session.close()
+        except:
+            raise exceptions.HTTPException(401,'Not Authorized')
 
     @additional_router.get("/login", response_class=RedirectResponse)
     async def aws_cognito_auth_flow_start():

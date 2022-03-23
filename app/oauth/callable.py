@@ -43,7 +43,7 @@ class AuthCallable:
             raise HTTPException(401, "Not Authorized")
 
     def auth_logic(self, user: dict):
-        # this is mostly here for overwriting and allowing us to do logic on user
+        # this is mostly here for overwriting and allowing us to do logic on username
         return user
 
     def additional_validation(self, user: UserWithRoles, request: Request):
@@ -117,7 +117,7 @@ def AuthRoleOrSelfCheck(
                 data = await request.json()
                 if data.get("user_id") == user.id:
                     return user
-            elif model.__name__.lower() == "user":
+            elif model.__name__.lower() == "username":
                 if request.query_params.get("id", None):
                     assert request.query_params["id"] == user.id
                     return user

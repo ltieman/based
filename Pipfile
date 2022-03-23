@@ -16,8 +16,6 @@ cryptography = "*"
 [dev-packages]
 pytest = "*"
 faker = "*"
-livereload = "*"
-coveralls = "*"
 
 
 [requires]

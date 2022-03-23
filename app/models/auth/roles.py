@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 class Role(BaseModel):
     __tablename__ = "role"
     role = Column(String, nullable=False)
-    user_id = Column(Integer, ForeignKey("user.id"))
+    user_id = Column(Integer, ForeignKey("username.id"))
     group_id = Column(Integer, ForeignKey("group.id"), nullable=True, default=None)
     UniqueConstraint('role','group_id','user_id', name='role_group_unique')
-    # user = relationship("user",backref='children')
+    # username = relationship("username",backref='children')

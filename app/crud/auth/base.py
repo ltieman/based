@@ -4,8 +4,9 @@ from app.oauth.roles import RoleEnum
 from app.models.auth.user import User
 from app.crud.auth.code_token import CodeTokenCrud
 from app.schemas.auth.code_token import CodeTokenSchema
-from app.schemas.auth.user import UserWithRoles, UserUpdateSchema
+from app.schemas.auth.user import UserWithRoles, UserUpdateSchema, UserLoginPostSchema
 from datetime import datetime
+from fastapi.requests import Request
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
@@ -17,6 +18,9 @@ from sqlalchemy.orm import Query
 from app.models.base import BaseModel as SQLBaseModel
 import requests
 from typing import Union, List, Dict, Any
+import hmac
+import hashlib
+import base64
 
 
 class AuthCrudBase(UserCrud):
@@ -38,17 +42,27 @@ class AuthCrudBase(UserCrud):
         return cls.__query_params__(**locals())
 
     @classmethod
-    def auth_callback(cls, code: str, response: Response, session: Session):
-        token = cls.get_token_from_code(code)
-        assert token.status_code == 200
+    def auth_callback(cls, code: str,
+                      response: Response,
+                      session: Session,
+                      token: str = None):
+        if not token:
+            token = cls.get_token_from_code(code)
+            assert token.status_code == 200
+            token_json = token.json()
+        else:
+            token_json = token
         response.set_cookie(
             key="AUTH-TOKEN",
             value=code,
             path="/",
             expires=3600 * 48
         )
-        token_json = token.json()
-        user_dict = cls.get_user_for_token(token_json["access_token"])
+        try:
+            access_token = token_json["access_token"]
+        except:
+            access_token = token_json['AccessToken']
+        user_dict = cls.get_user_for_token(access_token)
         user_schema = cls.user_format(user_dict)
         try:
             query = cls.index(
@@ -62,7 +76,7 @@ class AuthCrudBase(UserCrud):
         except Exception as e:
             user = None
         if user:
-            user = super.update(session=session,
+            user = super().update(session=session,
                               id=user.id,
                               data=user_schema
                               )
@@ -81,8 +95,9 @@ class AuthCrudBase(UserCrud):
                                              id=code
                                              )
         if not code_token:
+
             code_token = CodeTokenSchema(code=code,
-                                         token=token_json["access_token"],
+                                         token=access_token,
                                          user_id=user.id
                                          )
             cls.code_token_crud.post(session=session,
@@ -107,7 +122,7 @@ class AuthCrudBase(UserCrud):
         raise HTTPException(401,'Not Authorized')
 
     @classmethod
-    def validate_code(cls, session: Session, code: str):
+    def validate_code(cls, session: Session, code: str)->UserWithRoles:
         limit = 50
         offset = 0
         item = cls.code_token_crud.get(session=session, id=code)
@@ -167,7 +182,7 @@ class AuthCrudBase(UserCrud):
                 patch_user=patch_user,
                 user_attributes=user_attributes
             )
-            return super.update(session=session,
+            return super().update(session=session,
                          id=id,
                          data=data
                          )
@@ -179,6 +194,50 @@ if config.COGNITO_REGION:
     from app.oauth.client import auth_client
 
     class AWSAuthCrudBase(AuthCrudBase):
+
+        @classmethod
+        def user_login(cls,
+                       user_password: UserLoginPostSchema,
+                       request: Request = None,
+                       )->dict:
+            key = bytes(config.COGNITO_CLIENT_SECRET,'latin-1')
+            msg = bytes(user_password.username + config.COGNITO_CLIENTID, 'latin-1')
+            new_digest = hmac.new(key,msg,hashlib.sha256).digest()
+            secret_hash = base64.b64encode(new_digest).decode()
+            if not request:
+                authentication = auth_client.admin_initiate_auth(
+                    UserPoolId = config.COGNITO_USERPOOLID,
+                    ClientId = config.COGNITO_CLIENTID,
+                    AuthFlow = 'ADMIN_USER_PASSWORD_AUTH',
+                    AuthParameters = {
+                        "SECRET_HASH": secret_hash,
+                        "USERNAME": user_password.username,
+                        "PASSWORD": user_password.password
+                     })
+            else:
+                authentication = auth_client.admin_initiate_auth(
+                    UserPoolId = config.COGNITO_USERPOOLID,
+                    ClientId = config.COGNITO_CLIENTID,
+                    AuthFlow = 'ADMIN_USER_PASSWORD_AUTH',
+                    AuthParameters = {
+                        "SECRET_HASH": secret_hash,
+                        "USERNAME": user_password.username,
+                        "PASSWORD": user_password.password
+                     },
+
+                    ContextData = {
+                        'IpAddress': request.client.host,
+                        'HttpHeaders':[
+                            {
+                                'headerName': header_key,
+                                'headerValue': header_value
+                            }
+                            for header_key, header_value in request.headers.items()
+                        ]
+                        } )
+            return authentication['AuthenticationResult']
+
+
         @classmethod
         def get_user_for_token(cls, token) -> dict:
             return auth_client.get_user(AccessToken=token)

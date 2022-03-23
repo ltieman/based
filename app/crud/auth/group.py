@@ -15,7 +15,7 @@ class GroupCrud(BaseCrud):
     def post(
         cls, session: Session, data: GroupPostSchema, user: UserWithRoles = None
     ) -> SQLBaseModel:
-        item = super.post(session=session, data=data, user=user)
+        item = super().post(session=session, data=data, user=user)
         role = RolesPostSchema(
             user_id=user.id, group_id=item.id, role=RoleEnum.ADMIN.name
         )

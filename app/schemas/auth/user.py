@@ -6,7 +6,7 @@ from .roles import RolesGetSchema
 
 
 class UserLoginPostSchema(PostSchema):
-    email: str
+    username: str
     password: str
 
 

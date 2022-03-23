@@ -21,9 +21,9 @@ class BaseCrud:
             return query
         elif RoleEnum.ADMIN.name in user.roles:
             return query
-        elif user and hasattr(cls.model, "group_id"):
+        elif hasattr(cls.model, "group_id"):
             query = query.filter(cls.model.group_id.in_(user.authorized_groups))
-        elif user and cls.model.__name__.lower() == "group":
+        elif cls.model.__name__.lower() == "group":
             query = query.filter(cls.model.id.in_(user.authorized_groups))
         return query
 
@@ -53,7 +53,7 @@ class BaseCrud:
                             user: UserWithRoles = None):
         if not user:
             ...
-        elif user and (hasattr(data, "group_id") or hasattr(cls.model, "group_id")):
+        elif (hasattr(data, "group_id") or hasattr(cls.model, "group_id")):
             try:
                 assert data.group_id in user.authorized_groups
             except:
