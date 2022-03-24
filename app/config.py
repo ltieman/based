@@ -1,6 +1,11 @@
 from pydantic import BaseSettings
 from cryptography.fernet import Fernet
+from enum import Enum
 
+class AppEnvironment(Enum):
+    dev = 2
+    test = 1
+    prod = 3
 
 class Config(BaseSettings):
     CLEAN_URL: str = "localhost"
@@ -17,6 +22,7 @@ class Config(BaseSettings):
     AUTH0_DOMAIN: str = None
     AUTH0_CUSTOMAPI: str = None
     AUTH0_CLIENTID: str = None
+    APP_ENVIRONMENT: AppEnvironment = AppEnvironment.test
 
 
 config = Config()

@@ -16,7 +16,7 @@ import secrets
 
 additional_router = APIRouter()
 if config.COGNITO_REGION:
-    @additional_router.post("/login")
+    @additional_router.post("/login",response_model=UserGetSchema)
     def aws_cognito_auth_user_password(
             user_password: UserLoginPostSchema,
             response: Response,
@@ -26,9 +26,12 @@ if config.COGNITO_REGION:
         try:
             token = AuthCrud.user_login(user_password=user_password, request=request)
             code = secrets.token_urlsafe(32)
-            AuthCrud.auth_callback(code=code, session=session, token=token,response=response)
+            user = AuthCrud.auth_callback(code=code, session=session, token=token,response=response,return_user=True)
+            user = UserGetSchema.from_orm(user)
             session.close()
-        except:
+            return user
+        except Exception as e:
+            session.close()
             raise exceptions.HTTPException(401,'Not Authorized')
 
     @additional_router.get("/login", response_class=RedirectResponse)

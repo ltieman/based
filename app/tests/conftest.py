@@ -1,6 +1,14 @@
 from pydantic import BaseSettings
 import pytest
 from app.db import get_fastapi_sessionmaker
+from fastapi.testclient import TestClient
+
+
+from app.main import webapp
+
+@pytest.fixture
+def test_client():
+    return TestClient(webapp)
 
 class UserLogin(BaseSettings):
     USER: str

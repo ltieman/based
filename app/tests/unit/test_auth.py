@@ -6,7 +6,7 @@ import secrets
 
 @pytest.fixture
 def login_token(user_login):
-    user_password = UserLoginPostSchema(username = user_login.USER, password = user_login.COGNITO_PASSWORD)
+    user_password = UserLoginPostSchema(username = 'lucas', password = user_login.COGNITO_PASSWORD)
     #import pudb; pudb.set_trace()
     return AuthCrud.user_login(user_password=user_password)
 
@@ -15,17 +15,33 @@ def login_code():
     return secrets.token_urlsafe(32)
 
 @pytest.fixture
-def login_response():
+def login_blank_response():
     return Response()
 
 @pytest.fixture
-def login_with_code_and_token(session, login_token, login_code, login_response):
-    AuthCrud.auth_callback(code=login_code, token=login_token, response=login_response, session=session)
+def login_with_code_and_token(session, login_token, login_code, login_blank_response):
+    AuthCrud.auth_callback(code=login_code, token=login_token, response=login_blank_response, session=session)
+    return login_blank_response
 
-def test_login(login_with_code_and_token, login_response, login_code, user_login):
-    assert f"AUTH-TOKEN={login_code}" in login_response.headers['set-cookie']
+def test_login(login_with_code_and_token, login_code, user_login):
+    assert f"AUTH-TOKEN={login_code}" in login_with_code_and_token.headers['set-cookie']
 
-    assert True
+@pytest.fixture
+def login_response(test_client, user_login):
+    response = test_client.post(url="/users/login",json={"username":'lucas',"password":user_login.COGNITO_PASSWORD})
+    assert response.status_code == 200
+    return response
+
+def test_login_response(login_response):
+    assert login_response.json()['id']
+    assert login_response.json()['created']
+    assert login_response.json()['first_name']
+    assert login_response.json()['last_name']
+    assert login_response.json()['username']
+    assert login_response.json()['sub']
+    assert login_response.json()['email']
+    assert login_response.cookies['AUTH-TOKEN']
+
 
 def test_add_group():
     ...

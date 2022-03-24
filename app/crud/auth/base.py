@@ -10,7 +10,7 @@ from fastapi.requests import Request
 from fastapi.responses import Response
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
-from app.config import config
+from app.config import config, AppEnvironment
 from app.schemas.auth.user import UserCreatePostSchema
 from app.schemas.auth.roles import RolesPostSchema
 from pydantic import BaseModel
@@ -21,6 +21,8 @@ from typing import Union, List, Dict, Any
 import hmac
 import hashlib
 import base64
+from app.exceptions import AppEnvException
+
 
 
 class AuthCrudBase(UserCrud):
@@ -45,7 +47,8 @@ class AuthCrudBase(UserCrud):
     def auth_callback(cls, code: str,
                       response: Response,
                       session: Session,
-                      token: str = None):
+                      token: str = None,
+                      return_user: bool = False):
         if not token:
             token = cls.get_token_from_code(code)
             assert token.status_code == 200
@@ -103,6 +106,9 @@ class AuthCrudBase(UserCrud):
             cls.code_token_crud.post(session=session,
                                      data=code_token
                                      )
+        if return_user:
+            return user
+
 
     @classmethod
     def user_format(cls, user: dict) -> UserCreatePostSchema:
@@ -204,7 +210,32 @@ if config.COGNITO_REGION:
             msg = bytes(user_password.username + config.COGNITO_CLIENTID, 'latin-1')
             new_digest = hmac.new(key,msg,hashlib.sha256).digest()
             secret_hash = base64.b64encode(new_digest).decode()
-            if not request:
+            try:
+                if config.APP_ENVIRONMENT == AppEnvironment.test:
+                    raise AppEnvException('This Doesnt Work In Test')
+                authentication = auth_client.admin_initiate_auth(
+                    UserPoolId=config.COGNITO_USERPOOLID,
+                    ClientId=config.COGNITO_CLIENTID,
+                    AuthFlow='ADMIN_USER_PASSWORD_AUTH',
+                    AuthParameters={
+                        "SECRET_HASH": secret_hash,
+                        "USERNAME": user_password.username,
+                        "PASSWORD": user_password.password
+                    },
+
+                    ContextData={
+                        'IpAddress': request.client.host,
+                        'HttpHeaders': [
+                            {
+                                'headerName': header_key,
+                                'headerValue': header_value
+                            }
+                            for header_key, header_value in request.headers.items()
+                        ],
+                        'ServerName': str(request.base_url),
+                        'ServerPath': request.scope['path']
+                    })
+            except AppEnvException as e:
                 authentication = auth_client.admin_initiate_auth(
                     UserPoolId = config.COGNITO_USERPOOLID,
                     ClientId = config.COGNITO_CLIENTID,
@@ -214,27 +245,7 @@ if config.COGNITO_REGION:
                         "USERNAME": user_password.username,
                         "PASSWORD": user_password.password
                      })
-            else:
-                authentication = auth_client.admin_initiate_auth(
-                    UserPoolId = config.COGNITO_USERPOOLID,
-                    ClientId = config.COGNITO_CLIENTID,
-                    AuthFlow = 'ADMIN_USER_PASSWORD_AUTH',
-                    AuthParameters = {
-                        "SECRET_HASH": secret_hash,
-                        "USERNAME": user_password.username,
-                        "PASSWORD": user_password.password
-                     },
 
-                    ContextData = {
-                        'IpAddress': request.client.host,
-                        'HttpHeaders':[
-                            {
-                                'headerName': header_key,
-                                'headerValue': header_value
-                            }
-                            for header_key, header_value in request.headers.items()
-                        ]
-                        } )
             return authentication['AuthenticationResult']
 
 
