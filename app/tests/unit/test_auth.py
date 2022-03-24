@@ -7,7 +7,6 @@ import secrets
 @pytest.fixture
 def login_token(user_login):
     user_password = UserLoginPostSchema(username = 'lucas', password = user_login.COGNITO_PASSWORD)
-    #import pudb; pudb.set_trace()
     return AuthCrud.user_login(user_password=user_password)
 
 @pytest.fixture
