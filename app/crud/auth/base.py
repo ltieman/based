@@ -84,14 +84,17 @@ class AuthCrudBase(UserCrud):
                               data=user_schema
                               )
         else:
-            user = cls.post(session=session,
+            user = super().post(session=session,
                             data=user_schema
                             )
+        roles = RoleCrud.index(session=session,
+                               params={"user_id":user.id}
+                              )
+        if not roles:
             role_data = RolesPostSchema(user_id=user.id,
-                                        role=RoleEnum.LOGIN.name)
-
+                                    role=RoleEnum.LOGIN.name)
             role = RoleCrud.post(session=session,
-                                 data=role_data
+                             data=role_data
                                  )
             assert role
         code_token = cls.code_token_crud.get(session=session,
@@ -193,6 +196,7 @@ class AuthCrudBase(UserCrud):
                          data=data
                          )
         else:
+            session.close()
             raise HTTPException(422, "No Data To Update User")
 
 
@@ -202,10 +206,60 @@ if config.COGNITO_REGION:
     class AWSAuthCrudBase(AuthCrudBase):
 
         @classmethod
+        def reset_password(cls,
+                           username:str):
+            auth_client.admin_reset_user_password(
+                UserPoolId=config.COGNITO_USERPOOLID,
+                Username=username,
+            )
+
+        @classmethod
+        def post(
+        cls,
+        session: Session,
+        data: User,
+        user: UserWithRoles = None,
+        query_pass_back: bool = False
+    ) -> SQLBaseModel:
+            index = cls.index(session=session,params={"email":user.email})
+            if index:
+                session.close()
+                raise HTTPException(409, "User With Email Already Exists")
+            try:
+                create_user = auth_client.admin_create_user(
+                    UserPoolId=config.COGNITO_USERPOOLID,
+                    DesiredDeliveryMediums=['email'],
+                    UserAttributes = [
+                        {
+                            'Name': "given_name",
+                            "Value": user.first_name
+                        },
+                        {
+                            "Name":"family_name",
+                            "Value": user.last_name,
+                        },
+                        {
+                            "Name": "email_verified",
+                            "Value": True
+                        },
+                        {
+                            "Name": "email",
+                            "Value": user.email
+                        }
+                    ]
+                )
+            except:
+                session.close()
+                raise HTTPException(409, "User Can Not Be Created")
+
+
+        @classmethod
         def user_login(cls,
                        user_password: UserLoginPostSchema,
                        request: Request = None,
                        )->dict:
+            #cognito requires doing this to the client secret
+            #in order to
             key = bytes(config.COGNITO_CLIENT_SECRET,'latin-1')
             msg = bytes(user_password.username + config.COGNITO_CLIENTID, 'latin-1')
             new_digest = hmac.new(key,msg,hashlib.sha256).digest()
@@ -304,6 +358,27 @@ if config.COGNITO_REGION:
                 UserPoolId=config.COGNITO_USERPOOLID,
                 Username=patch_user.username,
                 UserAttributes=user_attributes)
+
+        @classmethod
+        def delete(cls,
+               session: Session,
+               id: int,
+               user: UserWithRoles = None,
+               query_pass_back: bool = False
+    ) -> Union[Query,SQLBaseModel]:
+            deleted_user = super().delete(
+                session=session,
+                id=id,
+                user=user,
+                query_pass_back=query_pass_back
+            )
+            if query_pass_back:
+                return query_pass_back
+            auth_client.admin_delete_user(
+                UserPoolId = config.COGNITO_USERPOOLID,
+                Username = deleted_user.username
+            )
+            return deleted_user
 
 
 

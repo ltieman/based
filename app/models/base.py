@@ -1,5 +1,5 @@
 from sqlalchemy.ext.declarative import declarative_base, declared_attr
-from sqlalchemy import Column, Integer, DateTime, inspect
+from sqlalchemy import Column, Integer, DateTime, inspect, Computed
 from datetime import datetime
 
 
@@ -7,7 +7,6 @@ class TableBase(object):
     """
     base class for sql alchemy tables
     """
-
     # Generate __tablename__ automatically
     @declared_attr
     def __tablename__(cls):
@@ -24,3 +23,4 @@ class TableBase(object):
 
 
 BaseModel = declarative_base(cls=TableBase)
+

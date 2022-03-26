@@ -1,5 +1,7 @@
 from app.crud.auth.base import AuthCrud
-from app.schemas.auth.user import UserLoginPostSchema
+from app.crud.auth.role import RoleCrud
+from app.schemas.auth.roles import RolesPostSchema, RoleEnum, RolesGetSchema
+from app.schemas.auth.user import UserLoginPostSchema, UserPostSchema
 from fastapi.responses import Response
 import pytest
 import secrets
@@ -40,6 +42,94 @@ def test_login_response(login_response):
     assert login_response.json()['sub']
     assert login_response.json()['email']
     assert login_response.cookies['AUTH-TOKEN']
+
+@pytest.fixture
+def login_response_fail(test_client):
+    response = test_client.post(url="/users/login",json={"username":'bobs',"password":'burgers'})
+    assert response.status_code == 401
+    return response
+
+def test_login_response_fail(login_response_fail):
+    assert not login_response_fail
+    assert login_response_fail.reason == 'Unauthorized'
+
+@pytest.fixture
+def set_user_as_admin(login_response, session):
+    query = RoleCrud.index(session=session,
+                   params={"user_id":login_response.json()['id'],
+                           "group_id": None
+                           },
+                   query_pass_back=True
+                 )
+    role = query.first()
+    role = RoleCrud.update(session=session,
+                           id=role.id,
+                           data=RolesPostSchema(
+                           user_id=role.user_id,
+                           role=RoleEnum.ADMIN)
+                            )
+    return role
+
+def test_user_set_admin(set_user_as_admin, login_response):
+    assert set_user_as_admin.role == RoleEnum.ADMIN
+    assert login_response.json()['id'] == set_user_as_admin.user_id
+
+@pytest.fixture
+def new_user():
+    return UserPostSchema(
+        username = 'lucastieman',
+        email = 'lucas+testuser@lucastieman.com',
+        first_name = 'lucas',
+        last_name = 'tieman'
+    )
+
+@pytest.fixture
+def create_new_user(login_response, test_client):
+    return test_client.post(cookies=login_response.cookies,
+                            url='/users/',
+                            json=new_user.dict(exclude_unset = True)
+                            )
+
+def test_new_user(create_new_user):
+    assert create_new_user.status_code > 300
+    assert create_new_user.json()
+
+
+@pytest.fixture
+def update_new_user():
+    return UserPostSchema(
+        username = 'lucastieman',
+        email = 'lucas+testuser@lucastieman.com',
+        first_name = 'Lucas',
+        last_name = 'Tieman'
+    )
+
+@pytest.fixture
+def patch_update(update_new_user, create_new_user, login_response, test_client):
+    return test_client.patch(url=f"/users/{create_new_user.json()['id']}",
+                             cookies=login_response.cookies,
+                             json=update_new_user.dict()
+                             )
+
+def test_patch_update(patch_update):
+    assert patch_update.status_code < 300
+    assert patch_update.json()
+
+@pytest.fixture
+def delete_user(create_new_user, login_response, test_client):
+    return test_client.delete(f'/users/{create_new_user.json()["id"]}',
+                              cookies=login_response.cookies,
+                              )
+
+def test_delete_user(delete_user):
+    assert delete_user.status_code < 300
+    assert delete_user.json()
+
+
+
+
+
+
 
 
 def test_add_group():

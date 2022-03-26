@@ -66,12 +66,14 @@ class UserView(BaseBuildView):
     role_get = RoleEnum.ADMIN
     role_index = RoleEnum.LOGIN
     role_patch = RoleEnum.ADMIN
+    role_post = RoleEnum.ADMIN
     available_routes = [
         Routes.get,
         Routes.index,
         Routes.delete,
         Routes.undelete,
-        Routes.patch
+        Routes.patch,
+        Routes.post
     ]
 
 

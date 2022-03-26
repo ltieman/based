@@ -9,6 +9,12 @@ class UserLoginPostSchema(PostSchema):
     username: str
     password: str
 
+class UserPostSchema(PostSchema):
+    username: str
+    email: str
+    first_name: str
+    last_name: str
+
 
 class UserCreatePostSchema(PostSchema):
     username: str
